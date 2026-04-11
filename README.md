@@ -4,7 +4,7 @@ sudo apt-get update
 sudo apt install ros-$ROS_DISTRO-moveit
 ```
 
-克隆仓库并切换为ros2的humble分支
+克隆仓库并切换为ros2的humble分支(如果已经存在不需要克隆)
 ```bash
 git clone https://github.com/agilexrobotics/piper_ros.git
 git checkout humble
