@@ -31,3 +31,19 @@ source
 ```bash
 source install/setup.bash
 ```
+
+在ros2中安装serial_driver
+```bash
+sudo apt update
+sudo apt install ros-humble-asio-cmake-module ros-humble-serial-driver
+```
+
+查看serial_driver的topic
+```bash
+ros2 topic list
+```
+
+打印serial_read
+```bash
+ros2 topic echo serial_read --once
+```
