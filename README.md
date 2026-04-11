@@ -87,6 +87,11 @@ sudo apt update
 sudo apt install ros-humble-asio-cmake-module ros-humble-serial-driver
 ```
 
+启动串口驱动
+```
+ros2 launch serial_driver serial_driver_bridge_node.launch.py
+```
+
 查看serial_driver的topic
 ```bash
 ros2 topic list
