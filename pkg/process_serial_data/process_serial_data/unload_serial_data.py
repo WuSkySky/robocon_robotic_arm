@@ -3,8 +3,9 @@ import struct
 from rclpy.node import Node
 from geometry_msgs.msg import Pose
 from std_msgs.msg import UInt8MultiArray
+from interface.msg import UnloadedSerialData
 
-class MinimalNode(Node):
+class UnloadSerialDataNode(Node):
     def __init__(self):
         super().__init__('unload_serial_data_node')
 
@@ -23,7 +24,7 @@ class MinimalNode(Node):
         )
 
         # pub
-        self.pose_publisher = self.create_publisher(Pose, '/target_pose', 10)
+        self.data_publisher = self.create_publisher(UnloadedSerialData, '/unloaded_serial_data', 10)
 
         # timer
         self.timer = self.create_timer(self.delta_time_process_data, self.process_data_callback)
@@ -41,7 +42,7 @@ class MinimalNode(Node):
             return 
         
         unpacked_data=self.data_unpack(self.msg_raw)
-        self.pub_pose(unpacked_data)
+        self.pub_unloaded_serial_data(unpacked_data)
 
 
     def data_unpack(self, data):
@@ -74,18 +75,20 @@ class MinimalNode(Node):
             'rc_switch': (rc_switch_left, rc_switch_right)
         }
 
-    def pub_pose(self,unpacked_data):
-        speed_factor=self.delta_time_process_data*0.0001
-        pose_msg = Pose()
-        pose_msg.position.x = self.last_pose.position.x + unpacked_data['rc_left'][0]*speed_factor
-        pose_msg.position.y = self.last_pose.position.y + unpacked_data['rc_left'][1]*speed_factor
-        pose_msg.position.z = self.last_pose.position.z + unpacked_data['rc_right'][1]*speed_factor
-        pose_msg.orientation.w = unpacked_data['quaternion'][0]
-        pose_msg.orientation.x = unpacked_data['quaternion'][1]
-        pose_msg.orientation.y = unpacked_data['quaternion'][2]
-        pose_msg.orientation.z = unpacked_data['quaternion'][3]
-        self.pose_publisher.publish(pose_msg)
-        self.last_pose = pose_msg
+    def pub_unloaded_serial_data(self,unpacked_data):
+        msg=UnloadedSerialData()
+        msg.w=unpacked_data['quaternion'][0]
+        msg.x=unpacked_data['quaternion'][1]
+        msg.y=unpacked_data['quaternion'][2]
+        msg.z=unpacked_data['quaternion'][3]
+        msg.rc_right_x=unpacked_data['rc_right'][0]
+        msg.rc_right_y=unpacked_data['rc_right'][1]
+        msg.rc_left_x=unpacked_data['rc_left'][0]
+        msg.rc_left_y=unpacked_data['rc_left'][1]
+        msg.rc_dial=unpacked_data['rc_dial']
+        msg.rc_switch_left=unpacked_data['rc_switch'][0]
+        msg.rc_switch_right=unpacked_data['rc_switch'][1]
+        self.data_publisher.publish(msg)
 
     #解析int_arr转换为float32
     def unpack_tofloat32(self, int_arr):
@@ -100,7 +103,7 @@ class MinimalNode(Node):
             
 def main(args=None):
     rclpy.init(args=args)
-    node = MinimalNode()
+    node = UnloadSerialDataNode()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()

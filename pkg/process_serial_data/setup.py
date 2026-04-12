@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'serial'
+package_name = 'process_serial_data'
 
 setup(
     name=package_name,
@@ -24,7 +24,9 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'serial_node = serial.unload_serial:main',
+            'unload_serial_data = process_serial_data.unload_serial_data:main',
+            'pub_target_pose = process_serial_data.pub_target_pose:main',
+            'tf_broadcast = process_serial_data.tf_broadcast:main',
         ],
     },
 )

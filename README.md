@@ -64,56 +64,35 @@ ros2 launch piper start_single_piper_rviz.launch.py
 ros2 launch serial_driver serial_driver_bridge_node.launch.py
 ```
 
+启动解包串口数据
+```bash
+ros2 run process_serial_data unload_serial_data
+```
+
+启动发布目标位姿
+```bash
+ros2 run process_serial_data pub_target_pose
+```
+
+启动广播tf
+```bash
+ros2 run process_serial_data tf_broadcast
+```
+
 #### 调试
 获取/end_pose
 ```bash
 ros2 topic echo /end_pose
 ```
-两种启动方式（前者不带rviz）
-```bash
-ros2 launch piper start_single_piper.launch.py 
-ros2 launch piper start_single_piper_rviz.launch.py 
-```
+
 命令行控制一次机械臂，注意不要改过大，可以从/end_pose获取末端位姿
 ```bash
 ros2 topic pub /pos_cmd piper_msgs/msg/PosCmd "{x: 0.04, y: 0.01, z: 0.3, roll: -0.15, pitch: 0.57, yaw: 0.02, gripper: 0.0}" --once
-```
-
-can连接
-```bash
-bash ./pkg/piper/find_all_can_port.sh
-```
-
-配置波特率
-```bash
-bash ./pkg/piper/can_activate.sh can0 1000000
 ```
 
 获取/end_pose
 ```bash
 ros2 topic echo /end_pose
-```
-
-两种启动方式（前者不带rviz）
-```bash
-ros2 launch piper start_single_piper.launch.py 
-ros2 launch piper start_single_piper_rviz.launch.py 
-```
-
-命令行控制一次机械臂，注意不要改过大，可以从/end_pose获取末端位姿
-```bash
-ros2 topic pub /pos_cmd piper_msgs/msg/PosCmd "{x: 0.04, y: 0.01, z: 0.3, roll: -0.15, pitch: 0.57, yaw: 0.02, gripper: 0.0}" --once
-```
-
-在ros2中安装serial_driver
-```bash
-sudo apt update
-sudo apt install ros-humble-asio-cmake-module ros-humble-serial-driver
-```
-
-启动串口驱动
-```bash
-ros2 launch serial_driver serial_driver_bridge_node.launch.py
 ```
 
 查看serial_driver的topic

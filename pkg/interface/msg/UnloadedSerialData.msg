@@ -1,0 +1,11 @@
+float64 w
+float64 x
+float64 y
+float64 z
+int32 rc_left_x
+int32 rc_left_y
+int32 rc_right_x
+int32 rc_right_y
+int32 rc_dial
+int8 rc_switch_left
+int8 rc_switch_right
