@@ -7,7 +7,7 @@ class TransformNode(Node):
     def __init__(self):
         super().__init__('transform_node')
 
-        self.parent_frame = 'base_link'      # 父坐标系
+        self.parent_frame = 'rc_odom'      # 父坐标系
         self.child_frame = 'target_pose' # 子坐标系
 
         # --- 1. 创建订阅者：接收原始数据 ---

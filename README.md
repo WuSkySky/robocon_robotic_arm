@@ -12,7 +12,7 @@ sudo apt-get update
 sudo apt install ros-$ROS_DISTRO-moveit
 ```
 
-安装can依赖,can工具,科学计算库,Piper 机械臂SDK,ros2-control
+安装can依赖,can工具,科学计算库,Piper 机械臂SDK,ros2-control,gui
 ```bash
 pip3 install python-can
 pip3 install scipy
@@ -22,12 +22,18 @@ sudo apt install ros-$ROS_DISTRO-ros2-controllers
 sudo apt install ros-$ROS_DISTRO-controller-manager
 sudo apt install can-utils
 sudo apt install ethtool
+sudo apt install ros-$ROS_DISTRO-joint-state-publisher-gui
 ```
 
 在ros2中安装驱动串口serial_driver
 ```bash
 sudo apt update
 sudo apt install ros-humble-asio-cmake-module ros-humble-serial-driver
+```
+
+安装tf工具
+```bash
+sudo apt install ros-$ROS_DISTRO-tf-transformations
 ```
 
 #### 构建
@@ -51,6 +57,11 @@ bash ./pkg/piper/find_all_can_port.sh
 配置波特率
 ```bash
 bash ./pkg/piper/can_activate.sh can0 1000000
+```
+
+配置串口权限
+```bash
+sudo chmod 666 /dev/ttyACM0
 ```
 
 两种启动方式（前者不带rviz）
@@ -79,6 +90,11 @@ ros2 run process_serial_data pub_target_pose
 ros2 run process_serial_data tf_broadcast
 ```
 
+启动遥控器控制
+```bash
+ros2 run robotic_arm_control rc_control
+```
+
 #### 调试
 获取/end_pose
 ```bash
@@ -105,3 +121,21 @@ ros2 topic list
 ros2 topic echo serial_read --once
 ```
 
+#### 协议
+接收协议 下位机至上位机
+
+| 偏移 | 字节大小 | 数据类型    | 含义      | 详细解释                     |
+|:---|:-----|---------|:--------|:-------------------------|
+| 0  | 2    |         | 帧头      | 0x55和0xAA                |
+| 2  | 4    | float32 | 四元数 w   | -1到1                     |
+| 6  | 4    | float32 | 四元数 x   | -1到1                     |
+| 10 | 4    | float32 | 四元数 y   | -1到1                     |
+| 14 | 4    | float32 | 四元数 z   | -1到1                     |
+| 18 | 2    | int16   | 右摇杆上下方向 | -660到+660                |
+| 20 | 2    | int16   | 右摇杆左右方向 | -660到+660                |
+| 22 | 2    | int16   | 左摇杆上下方向 | -660到+660                |
+| 24 | 2    | int16   | 左摇杆上下方向 | -660到+660                |
+| 26 | 2    | int16   | 滚轮      | -660到+660(顺时钟是负数，逆时针是正数) |
+| 28 | 1    | uint8   | 右拨动开关   | 下2 中间2 上1                |
+| 30 | 1    | uint8   | 左拨动开关   | 下2 中间2 上1                |
+| 62 | 2    |         | 帧尾      | 0x0D和0x0A                |

@@ -1,5 +1,6 @@
+import numpy as np
+
 import rclpy
-import struct
 from rclpy.node import Node
 from geometry_msgs.msg import Pose
 from interface.msg import UnloadedSerialData
@@ -40,9 +41,36 @@ class PubTargetPoseNode(Node):
     def pub_pose(self,data):
         speed_factor=self.delta_time_process_data*0.0001
         pose_msg = Pose()
-        pose_msg.position.x = self.last_pose.position.x + data.rc_left_y*speed_factor # 遥控器左摇杆y控制x轴移动
-        pose_msg.position.y = self.last_pose.position.y - data.rc_left_x*speed_factor # 遥控器左摇杆x的相反数控制y轴移动
-        pose_msg.position.z = self.last_pose.position.z + data.rc_right_y*speed_factor # 遥控器右摇杆y控制z轴移动
+
+        remote_input = np.array([
+            data.rc_left_y * speed_factor,    # 遥控器左摇杆y控制x轴移动
+            -data.rc_left_x * speed_factor,   # 遥控器左摇杆x的相反数控制y轴移动
+            data.rc_right_y * speed_factor    # 遥控器右摇杆y控制z轴移动
+        ])
+        
+        # 计算旋转矩阵
+        R = np.array([
+            [1 - 2*data.y*data.y - 2*data.z*data.z, 2*data.x*data.y - 2*data.z*data.w, 2*data.x*data.z + 2*data.y*data.w],
+            [2*data.x*data.y + 2*data.z*data.w, 1 - 2*data.x*data.x - 2*data.z*data.z, 2*data.y*data.z - 2*data.x*data.w],
+            [2*data.x*data.z - 2*data.y*data.w, 2*data.y*data.z + 2*data.x*data.w, 1 - 2*data.x*data.x - 2*data.y*data.y]
+        ])
+
+        # angle_rad = -np.pi / 2  # -90度
+        # cos_a = np.cos(angle_rad)
+        # sin_a = np.sin(angle_rad)
+        # R_y = np.array([
+        #     [cos_a, 0, sin_a],
+        #     [0, 1, 0],
+        #     [-sin_a, 0, cos_a]
+        # ])
+        
+        # 转换坐标系
+        world_movement = R @ remote_input
+
+        # 更新位置
+        pose_msg.position.x = self.last_pose.position.x + world_movement[0]
+        pose_msg.position.y = self.last_pose.position.y + world_movement[1]
+        pose_msg.position.z = self.last_pose.position.z + world_movement[2]
         pose_msg.orientation.w = data.w
         pose_msg.orientation.x = data.x
         pose_msg.orientation.y = data.y
