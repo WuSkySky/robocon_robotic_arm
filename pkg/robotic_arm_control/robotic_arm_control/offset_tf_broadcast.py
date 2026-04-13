@@ -21,11 +21,12 @@ class OffsetTfBroadcastNode(Node):
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
         # static tf broadcaster
-        self.static_tf_broadcaster = StaticTransformBroadcaster(self)
+        self.static_pre_offset_tf_broadcaster = StaticTransformBroadcaster(self)
+        self.static_post_offset_tf_broadcaster = StaticTransformBroadcaster(self)
 
         # timer
         self.pre_offset_single_use_timer = self.create_timer(3, self.pre_offset_single_use_timer_callback)
-        self.post_offset_single_use_timer = self.create_timer(4, self.post_offset_single_use_timer_callback)
+        self.post_offset_single_use_timer = self.create_timer(7, self.post_offset_single_use_timer_callback)
         
 
     # 回调函数
@@ -69,7 +70,7 @@ class OffsetTfBroadcastNode(Node):
         tf_base_link_to_rc_odom.child_frame_id = 'rc_odom'
         tf_base_link_to_rc_odom.header.stamp = self.get_clock().now().to_msg()
 
-        self.static_tf_broadcaster.sendTransform(tf_base_link_to_rc_odom)
+        self.static_pre_offset_tf_broadcaster.sendTransform(tf_base_link_to_rc_odom)
 
         self.pre_offset_used = True
 
@@ -96,7 +97,7 @@ class OffsetTfBroadcastNode(Node):
         tf_target_pose_to_target_pose_matched.child_frame_id = 'target_pose_matched'
         tf_target_pose_to_target_pose_matched.header.stamp = self.get_clock().now().to_msg()
 
-        self.static_tf_broadcaster.sendTransform(tf_target_pose_to_target_pose_matched)
+        self.static_post_offset_tf_broadcaster.sendTransform(tf_target_pose_to_target_pose_matched)
 
         self.post_offset_used = True
 

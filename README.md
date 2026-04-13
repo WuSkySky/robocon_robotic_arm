@@ -49,7 +49,7 @@ source install/setup.bash
 ```
 
 #### 启动
-can连接
+can查找
 ```bash
 bash ./pkg/piper/find_all_can_port.sh
 ```
@@ -69,6 +69,12 @@ sudo chmod 666 /dev/ttyACM0
 ros2 launch piper start_single_piper.launch.py 
 ros2 launch piper start_single_piper_rviz.launch.py 
 ```
+
+整合了下述的全部启动文件和节点
+```bash
+ros2 launch bringup serial_to_offset_tf.launch.py 
+```
+<details>
 
 启动串口驱动
 ```bash
@@ -90,10 +96,17 @@ ros2 run process_serial_data pub_target_pose
 ros2 run process_serial_data tf_broadcast
 ```
 
+启动变换后的tf
+```bash
+ros2 run robotic_arm_control offset_tf_broadcast
+```
+
 启动遥控器控制
 ```bash
 ros2 run robotic_arm_control rc_control
 ```
+</details>
+
 
 #### 调试
 获取/end_pose
