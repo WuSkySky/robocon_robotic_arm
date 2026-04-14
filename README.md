@@ -1,10 +1,3 @@
-#### 克隆仓库
-克隆仓库并切换为ros2的humble分支(如果已经存在不需要克隆)
-```bash
-git clone https://github.com/agilexrobotics/piper_ros.git
-git checkout humble
-```
-
 #### 环境安装
 安装moveit2
 ```bash
@@ -36,19 +29,34 @@ sudo apt install ros-humble-asio-cmake-module ros-humble-serial-driver
 sudo apt install ros-$ROS_DISTRO-tf-transformations
 ```
 
-#### 构建
+#### 构建和source 
 构建
 ```bash
 colcon build
 ```
 
-#### source
 source
 ```bash
 source install/setup.bash
 ```
 
 #### 启动
+配置串口权限
+```bash
+sudo chmod 666 /dev/ttyACM0
+```
+
+整合了下述的全部启动文件和节点
+```bash
+ros2 launch bringup serial_to_offset_tf.launch.py 
+```
+
+#### 分布启动
+启动串口驱动
+```bash
+ros2 launch serial_driver serial_driver_bridge_node.launch.py
+```
+
 can查找
 ```bash
 bash ./pkg/piper/find_all_can_port.sh
@@ -59,26 +67,10 @@ bash ./pkg/piper/find_all_can_port.sh
 bash ./pkg/piper/can_activate.sh can0 1000000
 ```
 
-配置串口权限
-```bash
-sudo chmod 666 /dev/ttyACM0
-```
-
 两种启动方式（前者不带rviz）
 ```bash
 ros2 launch piper start_single_piper.launch.py 
 ros2 launch piper start_single_piper_rviz.launch.py 
-```
-
-整合了下述的全部启动文件和节点
-```bash
-ros2 launch bringup serial_to_offset_tf.launch.py 
-```
-<details>
-
-启动串口驱动
-```bash
-ros2 launch serial_driver serial_driver_bridge_node.launch.py
 ```
 
 启动解包串口数据
@@ -105,7 +97,6 @@ ros2 run robotic_arm_control offset_tf_broadcast
 ```bash
 ros2 run robotic_arm_control rc_control
 ```
-</details>
 
 
 #### 调试
@@ -152,3 +143,17 @@ ros2 topic echo serial_read --once
 | 28 | 1    | uint8   | 右拨动开关   | 下2 中间2 上1                |
 | 30 | 1    | uint8   | 左拨动开关   | 下2 中间2 上1                |
 | 62 | 2    |         | 帧尾      | 0x0D和0x0A                |
+
+#### 使用的开源
+piper的humble分支
+```bash
+git clone https://github.com/agilexrobotics/piper_ros.git
+git checkout humble
+```
+
+亚博智能的imu 密码ibhe
+```
+https://www.yahboom.com/study/IMU_Sensor#xuanzhon_5
+```
+
+#### 疑难杂症
