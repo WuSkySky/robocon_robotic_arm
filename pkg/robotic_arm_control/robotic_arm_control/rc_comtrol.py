@@ -1,7 +1,7 @@
 import time
 import rclpy
 from rclpy.node import Node
-from piper_msgs.msg import PosCmd
+from piper_msgs.msg import PosCmd,PiperStatusMsg
 from tf2_ros import TransformStamped
 import numpy as np
 import tf2_ros
@@ -18,14 +18,14 @@ class RcControlNode(Node):
 
         # pub
         self.pose_publisher = self.create_publisher(
-            PosCmd,
-            '/pos_cmd',
+            PiperStatusMsg,
+            '/joint_states',
             10
         )
 
         # timer
         self.arm_control_timer = self.create_timer(0.01, self.arm_control_timer_callback)
-        
+        self.first_pose = True
     # 获取四元数
     def quaternion_to_euler(self, x, y, z, w):
         sinr_cosp = 2.0 * (w * x + y * z)
@@ -51,28 +51,38 @@ class RcControlNode(Node):
                 target_frame='base_link',
                 time=rclpy.time.Time()
             )
-            #生成PosCmd消息
-            PosCmd_msg = PosCmd()
 
-            qx = tf_base_link_to_link6.transform.rotation.x
-            qy = tf_base_link_to_link6.transform.rotation.y
-            qz = tf_base_link_to_link6.transform.rotation.z
-            qw = tf_base_link_to_link6.transform.rotation.w
+            #生成PiperStatusMsg消息
+            PiperStatusMsg_msg = PiperStatusMsg()
 
-            # 转换为欧拉角
-            roll, pitch, yaw = self.quaternion_to_euler(qx, qy, qz, qw)
+            if self.first_pose == True:
+                self.pose_publisher.publish(PiperStatusMsg_msg)
+                self.first_pose = False
+                self.get_logger().info(f"SetFirstPose Really")
 
-            #PosCmd里面的x,y,z填充
-            PosCmd_msg.x = tf_base_link_to_link6.transform.translation.x
-            PosCmd_msg.y = tf_base_link_to_link6.transform.translation.y
-            PosCmd_msg.z = tf_base_link_to_link6.transform.translation.z
-            #PosCmd里面的roll,pitch,yaw填充
-            PosCmd_msg.roll = roll
-            PosCmd_msg.pitch = pitch
-            PosCmd_msg.yaw = yaw
+            PiperStatusMsg_msg.ctrl_mode = 0x01
+            PiperStatusMsg_msg.arm_status = 0x00
+            PiperStatusMsg_msg.mode_feedback = 0x00
+            PiperStatusMsg_msg.teach_status = 0x00
+            PiperStatusMsg_msg.motion_status = 0x00
+            PiperStatusMsg_msg.trajectory_num = 0x00
+            PiperStatusMsg_msg.err_code = 0x00
+            PiperStatusMsg_msg.joint_1_angle_limit = False
+            PiperStatusMsg_msg.joint_2_angle_limit = False
+            PiperStatusMsg_msg.joint_3_angle_limit = False
+            PiperStatusMsg_msg.joint_4_angle_limit = False
+            PiperStatusMsg_msg.joint_5_angle_limit = False
+            PiperStatusMsg_msg.joint_6_angle_limit = False
+            PiperStatusMsg_msg.communication_status_joint_1 = False
+            PiperStatusMsg_msg.communication_status_joint_2 = False
+            PiperStatusMsg_msg.communication_status_joint_3 = False
+            PiperStatusMsg_msg.communication_status_joint_4 = False
+            PiperStatusMsg_msg.communication_status_joint_5 = False
+            PiperStatusMsg_msg.communication_status_joint_6 = False
 
-            self.get_logger().info(f"Publishing PosCmd: x={PosCmd_msg.x}, y={PosCmd_msg.y}, z={PosCmd_msg.z}, roll={PosCmd_msg.roll}, pitch={PosCmd_msg.pitch}, yaw={PosCmd_msg.yaw}")
-            self.pose_publisher.publish(PosCmd_msg)
+
+            self.get_logger().info(f"Publishing PiperStatusMsg: ctrl_mode={PiperStatusMsg_msg.ctrl_mode}")
+            self.pose_publisher.publish(PiperStatusMsg_msg)
         except Exception as e:
             self.get_logger().error(f"Error in arm_control_timer_callback: {e}")
 
