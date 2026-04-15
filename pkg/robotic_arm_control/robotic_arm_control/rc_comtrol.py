@@ -29,7 +29,7 @@ class RcControlNode(Node):
         self.first_pose = True
 
         # slover
-        self.arm_slover = ArmSlover(r"/home/skysky/workspace/robocon_robotic_arm/pkg/piper/piper_description/urdf/piper_no_gripper_description.urdf")
+        self.arm_slover = ArmSlover(r"/home/wangxiaotao/github/robocon_robotic_arm/pkg/piper/piper_description/urdf/piper_no_gripper_description_old.urdf")
 
     # 回调函数
     def arm_control_timer_callback(self):

@@ -25,8 +25,20 @@ sudo apt install ros-humble-asio-cmake-module ros-humble-serial-driver
 ```
 
 安装tf工具
+
 ```bash
 sudo apt install ros-$ROS_DISTRO-tf-transformations
+```
+安装roboticstoolbox-python包
+
+```bash
+pip3 install roboticstoolbox-python
+```
+
+升级transforms3d包
+
+```bash
+pip install --user --upgrade transforms3d
 ```
 
 #### 构建和source 
@@ -50,6 +62,7 @@ sudo chmod 666 /dev/ttyACM0
 ```bash
 ros2 launch bringup serial_to_offset_tf.launch.py 
 ```
+运行前修改rc_comtrol.py里面的slover的绝对路径
 
 #### 分布启动
 启动串口驱动
