@@ -157,3 +157,7 @@ https://www.yahboom.com/study/IMU_Sensor#xuanzhon_5
 ```
 
 #### 疑难杂症
+numpy 版本过高报错
+```bash
+pip install numpy==1.23.5
+```

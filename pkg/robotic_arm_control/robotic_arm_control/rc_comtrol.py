@@ -1,12 +1,13 @@
 import time
 import rclpy
 from rclpy.node import Node
-from piper_msgs.msg import PosCmd,PiperStatusMsg
-from tf2_ros import TransformStamped
+from tf_transformations import quaternion_matrix
 import numpy as np
 import tf2_ros
-import math
-import tf_transformations
+import roboticstoolbox as rtb
+import numpy as np
+import numpy as np
+from sensor_msgs.msg import JointState
 
 class RcControlNode(Node):
     def __init__(self):
@@ -17,79 +18,114 @@ class RcControlNode(Node):
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
         # pub
-        self.pose_publisher = self.create_publisher(
-            PiperStatusMsg,
+        self.joint_angle_publisher = self.create_publisher(
+            JointState,
             '/joint_states',
             10
         )
 
         # timer
-        self.arm_control_timer = self.create_timer(0.01, self.arm_control_timer_callback)
+        self.arm_control_timer = self.create_timer(2, self.arm_control_timer_callback)
         self.first_pose = True
-    # 获取四元数
-    def quaternion_to_euler(self, x, y, z, w):
-        sinr_cosp = 2.0 * (w * x + y * z)
-        cosr_cosp = 1.0 - 2.0 * (x * x + y * y)
-        roll = math.atan2(sinr_cosp, cosr_cosp)
 
-        sinp = 2.0 * (w * y - z * x)
-        if abs(sinp) >= 1:
-            pitch = math.copysign(math.pi / 2, sinp)
-        else:
-            pitch = math.asin(sinp)
-    
-        siny_cosp = 2.0 * (w * z + x * y)
-        cosy_cosp = 1.0 - 2.0 * (y * y + z * z)
-        yaw = math.atan2(siny_cosp, cosy_cosp)
-        return roll, pitch, yaw
+        # slover
+        self.arm_slover = ArmSlover(r"/home/skysky/workspace/robocon_robotic_arm/pkg/piper/piper_description/urdf/piper_no_gripper_description.urdf")
 
     # 回调函数
     def arm_control_timer_callback(self):
         try:
-            tf_base_link_to_link6 = self.tf_buffer.lookup_transform(
+            tf_base_link_to_target_pose_matched = self.tf_buffer.lookup_transform(
                 source_frame='target_pose_matched',
                 target_frame='base_link',
                 time=rclpy.time.Time()
             )
 
-            #生成PiperStatusMsg消息
-            PiperStatusMsg_msg = PiperStatusMsg()
-
             if self.first_pose == True:
-                self.pose_publisher.publish(PiperStatusMsg_msg)
-                self.first_pose = False
+                control_msg = JointState()
+
+                control_msg.header.stamp = self.get_clock().now().to_msg()
+                control_msg.header.frame_id = ''
+                
+                control_msg.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
+                control_msg.position = [0.0,0.0,0.0,0.0,0.0,0.0]
+                self.joint_angle_publisher.publish(control_msg)
+                
                 self.get_logger().info(f"SetFirstPose Really")
 
-            PiperStatusMsg_msg.ctrl_mode = 0x01
-            PiperStatusMsg_msg.arm_status = 0x00
-            PiperStatusMsg_msg.mode_feedback = 0x00
-            PiperStatusMsg_msg.teach_status = 0x00
-            PiperStatusMsg_msg.motion_status = 0x00
-            PiperStatusMsg_msg.trajectory_num = 0x00
-            PiperStatusMsg_msg.err_code = 0x00
-            PiperStatusMsg_msg.joint_1_angle_limit = False
-            PiperStatusMsg_msg.joint_2_angle_limit = False
-            PiperStatusMsg_msg.joint_3_angle_limit = False
-            PiperStatusMsg_msg.joint_4_angle_limit = False
-            PiperStatusMsg_msg.joint_5_angle_limit = False
-            PiperStatusMsg_msg.joint_6_angle_limit = False
-            PiperStatusMsg_msg.communication_status_joint_1 = False
-            PiperStatusMsg_msg.communication_status_joint_2 = False
-            PiperStatusMsg_msg.communication_status_joint_3 = False
-            PiperStatusMsg_msg.communication_status_joint_4 = False
-            PiperStatusMsg_msg.communication_status_joint_5 = False
-            PiperStatusMsg_msg.communication_status_joint_6 = False
+                self.first_pose = False
 
+                return
 
-            self.get_logger().info(f"Publishing PiperStatusMsg: ctrl_mode={PiperStatusMsg_msg.ctrl_mode}")
-            self.pose_publisher.publish(PiperStatusMsg_msg)
+            target_matrix = self.transform_to_4x4(tf_base_link_to_target_pose_matched.transform)
+
+            control_joint_angles, success_flag = self.arm_slover.ik(target_matrix)
+
+            self.get_logger().info(f"IK Success: {success_flag}, Joint Angles: {control_joint_angles}")
+
+            if success_flag:
+                control_msg = JointState()
+
+                control_msg.header.stamp = self.get_clock().now().to_msg()
+                control_msg.header.frame_id = ''
+                
+                control_msg.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
+                control_msg.position = list(control_joint_angles)
+                self.joint_angle_publisher.publish(control_msg)
+
+                self.get_logger().info(f"成功解算: {control_joint_angles}")
+            else:
+                self.get_logger().warn(f"IK 解算失败")
+
         except Exception as e:
             self.get_logger().error(f"Error in arm_control_timer_callback: {e}")
 
+    def transform_to_4x4(self, transform):
+        """
+        将 geometry_msgs/Transform 转换为 4x4 矩阵
+        """
         
+        # 提取四元数
+        q = [
+            transform.rotation.x,
+            transform.rotation.y,
+            transform.rotation.z,
+            transform.rotation.w
+        ]
+        
+        # 获取旋转矩阵
+        R = quaternion_matrix(q)
+        
+        # 设置平移
+        R[0, 3] = transform.translation.x
+        R[1, 3] = transform.translation.y
+        R[2, 3] = transform.translation.z
+        
+        return R
 
+class ArmSlover:
+    def __init__(self,urdf_path):
+        """
+        Args:
+            urdf_path: str, URDF文件路径
+        """
+        self.robot = rtb.ERobot.URDF(urdf_path)
 
-      
+        T_end = self.robot.fkine(np.zeros(6))
+        T_wrist = self.robot.fkine(np.zeros(6), end=self.robot.links[5])
+        # self.robot.tool=T_end.inv()*T_wrist
+    
+    def ik(self, target):
+        """
+        逆运动学解算得到关节角度
+        Args:
+            target: matrix-like
+        Returns:
+            thetas: array-like, 关节角度
+            success: bool, 是否成功求解, 成功1, 失败0
+        """
+        result = self.robot.ik_LM(target)
+        return result[0], result[1]
+
 def main(args=None):
     rclpy.init(args=args)
     node = RcControlNode()
