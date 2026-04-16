@@ -109,7 +109,7 @@ def generate_launch_description():
     #启动发布目标位姿
     publish_target_pose_node = Node(
         package='process_serial_data',
-        executable='pub_target_pose',
+        executable='pub_target_pose_yahboom_imu',
         name='publish_target_pose_node',
         output='screen'
     )
@@ -134,7 +134,7 @@ def generate_launch_description():
     ld.add_action(broadcast_offset_tf_node)
 
 
-    #启动遥控器控制 #这个后面加
+    #启动遥控器控制
     rc_control_node = Node(
         package='robotic_arm_control',
         executable='rc_control',

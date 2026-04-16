@@ -58,9 +58,10 @@ source install/setup.bash
 sudo chmod 666 /dev/ttyACM0
 ```
 
-整合了下述的全部启动文件和节点
+launch 启动(两种 imu来自c板 imu来自yahboom imu)
 ```bash
-ros2 launch bringup serial_to_offset_tf.launch.py 
+ros2 launch bringup control_c_board.launch.py 
+ros2 launch bringup control_yahboom_imu.launch.py 
 ```
 运行前修改rc_comtrol.py里面的slover的绝对路径
 
@@ -91,9 +92,10 @@ ros2 launch piper start_single_piper_rviz.launch.py
 ros2 run process_serial_data unload_serial_data
 ```
 
-启动发布目标位姿
+启动发布目标位姿(两种 imu来自c板 imu来自yahboom imu)
 ```bash
 ros2 run process_serial_data pub_target_pose
+ros2 run process_serial_data pub_target_pose_yahboom_imu
 ```
 
 启动广播tf
