@@ -84,6 +84,19 @@ def generate_launch_description():
 
     ld.add_action(serial_launch)
 
+    # 启动IMU的launch文件
+    imu_launch_file = os.path.join(
+        get_package_share_directory('imu_ros2_device'), 
+        'launch',                      
+        'ybimu_display.launch.py'                
+    )
+
+    imu_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(imu_launch_file)
+    )
+
+    ld.add_action(imu_launch)
+
     #启动解包串口数据
     unload_serial_data_node = Node(
         package='process_serial_data',

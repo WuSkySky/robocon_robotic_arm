@@ -27,6 +27,7 @@ setup(
             'unload_serial_data = process_serial_data.unload_serial_data:main',
             'pub_target_pose = process_serial_data.pub_target_pose:main',
             'tf_broadcast = process_serial_data.tf_broadcast:main',
+            'pub_target_pose_imu = process_serial_data.pub_target_pose_imu:main',
         ],
     },
 )
