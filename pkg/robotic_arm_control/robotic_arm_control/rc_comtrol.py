@@ -1,4 +1,3 @@
-import time
 import rclpy
 from rclpy.node import Node
 from tf_transformations import quaternion_matrix
@@ -27,7 +26,7 @@ class RcControlNode(Node):
         )
 
         # timer
-        self.arm_control_timer = self.create_timer(1, self.arm_control_timer_callback)
+        self.arm_control_timer = self.create_timer(0.016, self.arm_control_timer_callback)
         self.first_pose = True
 
         # slover
@@ -47,25 +46,9 @@ class RcControlNode(Node):
             self.get_logger().warn(f"rc_control获取tf失败,等待tf中...")
             return
 
-        if self.first_pose == True:
-            control_msg = JointState()
-
-            control_msg.header.stamp = self.get_clock().now().to_msg()
-            control_msg.header.frame_id = ''
-            
-            control_msg.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
-            control_msg.position = [0.0,0.0,0.0,0.0,0.0,0.0]
-            self.joint_angle_publisher.publish(control_msg)
-            
-            self.get_logger().info(f"SetFirstPose Really")
-
-            self.first_pose = False
-
-            return
-
         target_matrix = self.transform_to_4x4(tf_base_link_to_target_pose_matched.transform)
 
-        control_joint_angles, success_flag = self.arm_slover.ik(self.arm_slover.new)
+        control_joint_angles, success_flag = self.arm_slover.ik(target_matrix)
 
         if success_flag:
             control_msg = JointState()
@@ -74,9 +57,9 @@ class RcControlNode(Node):
             control_msg.header.frame_id = ''
             
             control_msg.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
-            control_msg.position = list(control_joint_angles)
+            control_msg.position =  list(control_joint_angles)
             self.get_logger().info(f"IK 解算成功, 关节角度: {control_msg.position}")
-            # self.joint_angle_publisher.publish(control_msg)
+            self.joint_angle_publisher.publish(control_msg)
         else:
             self.get_logger().warn(f"IK 解算失败")
 
@@ -111,27 +94,16 @@ class ArmSlover:
         """
         self.robot = rtb.ERobot.URDF(urdf_path)
 
-        T_end = self.robot.fkine(np.zeros(6))
-        T_wrist = self.robot.fkine(np.zeros(6), end=self.robot.links[5])
-        R_new = T_end.R
-        t_new = T_wrist.t
-        T_new = np.zeros((4, 4))
-        T_new[:3, :3] = R_new
-        T_new[:3, 3] = t_new
-        T_new[3, 3] = 1
-        self.new=T_new
-        self.robot.tool=T_end.inv()*T_new
-    
     def ik(self, target):
         """
         逆运动学解算得到关节角度
         Args:
-            target: matrix-like
+            target: matrix-like 4x4
         Returns:
             thetas: array-like, 关节角度
             success: bool, 是否成功求解, 成功1, 失败0
         """
-        result = self.robot.ik_LM(target,mask=[1,1,1,1,1,1],q0=np.zeros(6))
+        result = self.robot.ik_LM(target,q0=np.zeros(6))
         return result[0], result[1]
 
 def main(args=None):

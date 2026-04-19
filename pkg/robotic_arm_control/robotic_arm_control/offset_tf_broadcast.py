@@ -1,7 +1,6 @@
 import math
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Pose
 from tf2_ros import StaticTransformBroadcaster, TransformStamped
 from tf_transformations import quaternion_from_euler, quaternion_multiply
 import numpy as np
@@ -78,7 +77,7 @@ class OffsetTfBroadcastNode(Node):
         if self.post_offset_used:
             return
         
-        tf_base_link_to_rc_odom = self.tf_buffer.lookup_transform(
+        tf_base_link_to_target_pose = self.tf_buffer.lookup_transform(
             source_frame='target_pose',
             target_frame='base_link',
             time=rclpy.time.Time()
@@ -91,7 +90,7 @@ class OffsetTfBroadcastNode(Node):
         )
 
         tf_target_pose_to_target_pose_matched = self.calculate_post_offset_tf(
-            tf_base_link_to_rc_odom,
+            tf_base_link_to_target_pose,
             tf_base_link_to_link6
         )
         tf_target_pose_to_target_pose_matched.child_frame_id = 'target_pose_matched'
