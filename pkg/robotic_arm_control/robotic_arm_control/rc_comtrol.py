@@ -8,6 +8,8 @@ import roboticstoolbox as rtb
 import numpy as np
 import numpy as np
 from sensor_msgs.msg import JointState
+from ament_index_python.packages import get_package_share_directory
+import os
 
 class RcControlNode(Node):
     def __init__(self):
@@ -25,11 +27,13 @@ class RcControlNode(Node):
         )
 
         # timer
-        self.arm_control_timer = self.create_timer(2, self.arm_control_timer_callback)
+        self.arm_control_timer = self.create_timer(1, self.arm_control_timer_callback)
         self.first_pose = True
 
         # slover
-        self.arm_slover = ArmSlover(r"/home/wangxiaotao/github/robocon_robotic_arm/pkg/piper/piper_description/urdf/piper_no_gripper_description_old.urdf")
+        piper_description_path = get_package_share_directory('piper_description')
+        robot_urdf_file_path = os.path.join(piper_description_path, 'urdf', 'piper_no_gripper_description.urdf')
+        self.arm_slover = ArmSlover(robot_urdf_file_path) 
 
     # 回调函数
     def arm_control_timer_callback(self):
@@ -39,45 +43,42 @@ class RcControlNode(Node):
                 target_frame='base_link',
                 time=rclpy.time.Time()
             )
-
-            if self.first_pose == True:
-                control_msg = JointState()
-
-                control_msg.header.stamp = self.get_clock().now().to_msg()
-                control_msg.header.frame_id = ''
-                
-                control_msg.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
-                control_msg.position = [0.0,0.0,0.0,0.0,0.0,0.0]
-                self.joint_angle_publisher.publish(control_msg)
-                
-                self.get_logger().info(f"SetFirstPose Really")
-
-                self.first_pose = False
-
-                return
-
-            target_matrix = self.transform_to_4x4(tf_base_link_to_target_pose_matched.transform)
-
-            control_joint_angles, success_flag = self.arm_slover.ik(target_matrix)
-
-            self.get_logger().info(f"IK Success: {success_flag}, Joint Angles: {control_joint_angles}")
-
-            if success_flag:
-                control_msg = JointState()
-
-                control_msg.header.stamp = self.get_clock().now().to_msg()
-                control_msg.header.frame_id = ''
-                
-                control_msg.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
-                control_msg.position = list(control_joint_angles)
-                self.joint_angle_publisher.publish(control_msg)
-
-                self.get_logger().info(f"成功解算: {control_joint_angles}")
-            else:
-                self.get_logger().warn(f"IK 解算失败")
-
         except Exception as e:
-            self.get_logger().error(f"Error in arm_control_timer_callback: {e}")
+            self.get_logger().warn(f"rc_control获取tf失败,等待tf中...")
+            return
+
+        if self.first_pose == True:
+            control_msg = JointState()
+
+            control_msg.header.stamp = self.get_clock().now().to_msg()
+            control_msg.header.frame_id = ''
+            
+            control_msg.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
+            control_msg.position = [0.0,0.0,0.0,0.0,0.0,0.0]
+            self.joint_angle_publisher.publish(control_msg)
+            
+            self.get_logger().info(f"SetFirstPose Really")
+
+            self.first_pose = False
+
+            return
+
+        target_matrix = self.transform_to_4x4(tf_base_link_to_target_pose_matched.transform)
+
+        control_joint_angles, success_flag = self.arm_slover.ik(self.arm_slover.new)
+
+        if success_flag:
+            control_msg = JointState()
+
+            control_msg.header.stamp = self.get_clock().now().to_msg()
+            control_msg.header.frame_id = ''
+            
+            control_msg.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
+            control_msg.position = list(control_joint_angles)
+            self.get_logger().info(f"IK 解算成功, 关节角度: {control_msg.position}")
+            # self.joint_angle_publisher.publish(control_msg)
+        else:
+            self.get_logger().warn(f"IK 解算失败")
 
     def transform_to_4x4(self, transform):
         """
@@ -112,7 +113,14 @@ class ArmSlover:
 
         T_end = self.robot.fkine(np.zeros(6))
         T_wrist = self.robot.fkine(np.zeros(6), end=self.robot.links[5])
-        # self.robot.tool=T_end.inv()*T_wrist
+        R_new = T_end.R
+        t_new = T_wrist.t
+        T_new = np.zeros((4, 4))
+        T_new[:3, :3] = R_new
+        T_new[:3, 3] = t_new
+        T_new[3, 3] = 1
+        self.new=T_new
+        self.robot.tool=T_end.inv()*T_new
     
     def ik(self, target):
         """
@@ -123,7 +131,7 @@ class ArmSlover:
             thetas: array-like, 关节角度
             success: bool, 是否成功求解, 成功1, 失败0
         """
-        result = self.robot.ik_LM(target)
+        result = self.robot.ik_LM(target,mask=[1,1,1,1,1,1],q0=np.zeros(6))
         return result[0], result[1]
 
 def main(args=None):
