@@ -58,14 +58,17 @@ source install/setup.bash
 sudo chmod 666 /dev/ttyACM0
 ```
 
-launch 启动(两种 imu来自c板 imu来自yahboom imu)
+launch 启动
 ```bash
-ros2 launch bringup control_c_board.launch.py 
-ros2 launch bringup control_yahboom_imu.launch.py 
+ros2 launch bringup rc_control.launch.py 
 ```
-运行前修改rc_comtrol.py里面的slover的绝对路径
 
 #### 分布启动
+配置串口权限
+```bash
+sudo chmod 666 /dev/ttyACM0
+```
+
 启动串口驱动
 ```bash
 ros2 launch serial_driver serial_driver_bridge_node.launch.py
@@ -92,10 +95,9 @@ ros2 launch piper start_single_piper_rviz.launch.py
 ros2 run process_serial_data unload_serial_data
 ```
 
-启动发布目标位姿(两种 imu来自c板 imu来自yahboom imu)
+启动发布目标位姿
 ```bash
 ros2 run process_serial_data pub_target_pose
-ros2 run process_serial_data pub_target_pose_yahboom_imu
 ```
 
 启动广播tf

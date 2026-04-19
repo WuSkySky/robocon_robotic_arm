@@ -143,5 +143,4 @@ def generate_launch_description():
     )
     ld.add_action(rc_control_node)
 
-
     return ld
