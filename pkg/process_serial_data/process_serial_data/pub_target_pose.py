@@ -59,7 +59,7 @@ class PubTargetPoseNode(Node):
 
         remote_input = np.array([
             data.rc_left_y * speed_factor,    # 遥控器左摇杆y控制x轴移动
-            -data.rc_left_x * speed_factor,   # 遥控器左摇杆x的相反数控制y轴移动
+            data.rc_left_x * speed_factor,    # 遥控器左摇杆x控制y轴移动
             data.rc_right_y * speed_factor    # 遥控器右摇杆y控制z轴移动
         ])
 
@@ -70,17 +70,6 @@ class PubTargetPoseNode(Node):
             [2*data_imu.x*data_imu.y + 2*data_imu.z*data_imu.w, 1 - 2*data_imu.x*data_imu.x - 2*data_imu.z*data_imu.z, 2*data_imu.y*data_imu.z - 2*data_imu.x*data_imu.w],
             [2*data_imu.x*data_imu.z - 2*data_imu.y*data_imu.w, 2*data_imu.y*data_imu.z + 2*data_imu.x*data_imu.w, 1 - 2*data_imu.x*data_imu.x - 2*data_imu.y*data_imu.y]
         ])
-
-    
-        
-        # angle_rad = -np.pi / 2  # -90度
-        # cos_a = np.cos(angle_rad)
-        # sin_a = np.sin(angle_rad)
-        # R_y = np.array([
-        #     [cos_a, 0, sin_a],
-        #     [0, 1, 0],
-        #     [-sin_a, 0, cos_a]
-        # ])
         
         # 转换坐标系
         world_movement = R @ remote_input
