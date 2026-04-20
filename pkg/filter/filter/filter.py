@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from scipy.signal import butter
 
 class Filter(ABC):
     def __init__(self):
@@ -42,6 +43,45 @@ class FirstOrderLowPassFilter(Filter):
         data_output = self.alpha * self.data_recoded + (1 - self.alpha) * data_input
         self.data_recoded = data_output
         return data_output
+    
+class SecondOrderButterworthLowPass(Filter):
+    """二阶 Butterworth 低通，根据给定 Wn 自动计算系数"""
+    def __init__(self, Wn=0.25):
+        super().__init__()
+        # 设计二阶 Butterworth 低通，获取 ba 系数
+        b, a = butter(2, Wn, btype='low', output='ba')
+        self.b = b.tolist()   # [b0, b1, b2]
+        self.a = a.tolist()[1:] # [a1, a2]，a0=1 已归一化
+
+        # 状态清零
+        self.reset()
+
+    def reset(self):
+        self.x1 = 0.0
+        self.x2 = 0.0
+        self.y1 = 0.0
+        self.y2 = 0.0
+
+    def filter_sample(self, x_new):
+        y_new = (
+            self.b[0] * x_new +
+            self.b[1] * self.x1 +
+            self.b[2] * self.x2 -
+            self.a[0] * self.y1 -
+            self.a[1] * self.y2
+        )
+        self.x2 = self.x1
+        self.x1 = x_new
+        self.y2 = self.y1
+        self.y1 = y_new
+        return y_new
+
+    def filter(self, data_input):
+        # 同上，支持标量与序列
+        if hasattr(data_input, '__len__'):
+            return [self.filter_sample(x) for x in data_input]
+        else:
+            return self.filter_sample(data_input)
     
 if __name__ == "__main__":
     a = FirstOrderLowPassFilter(alpha=0.5)
