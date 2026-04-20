@@ -25,7 +25,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'ybimu_driver = imu_ros2_device.ybimu_driver:main'
+            'ybimu_driver = imu_ros2_device.ybimu_driver:main',
+            'imu_filter = imu_ros2_device.imu_filter:main'
         ],
     },
 )

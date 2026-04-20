@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'process_serial_data'
+package_name = 'filter'
 
 setup(
     name=package_name,
@@ -13,8 +13,8 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='wangxiaotao',
-    maintainer_email='hliu6076@gmail.com',
+    maintainer='skysky',
+    maintainer_email='didi636963@gmail.com',
     description='TODO: Package description',
     license='TODO: License declaration',
     extras_require={
@@ -24,9 +24,6 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'unload_serial_data = process_serial_data.unload_serial_data:main',
-            'pub_target_pose = process_serial_data.pub_target_pose:main',
-            'tf_broadcast = process_serial_data.tf_broadcast:main',
         ],
     },
 )
