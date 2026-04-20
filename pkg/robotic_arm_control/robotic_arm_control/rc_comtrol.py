@@ -26,19 +26,32 @@ class RcControlNode(Node):
             10
         )
 
+        # sub
+        self.joint_angle_subscriber = self.create_subscription(
+            JointState,
+            '/joint_states_single',
+            self.joint_angle_subscriber_callback,
+            10
+        )
+
         # timer
         self.arm_control_timer = self.create_timer(0.016, self.arm_control_timer_callback)
-        self.first_pose = True
+        # flag
+        self.first_pose = False
 
         # slover
         piper_description_path = get_package_share_directory('piper_description')
         robot_urdf_file_path = os.path.join(piper_description_path, 'urdf', 'piper_no_gripper_description.urdf')
         self.arm_slover = ArmSlover(robot_urdf_file_path) 
+        self.get_pose_msg = JointState()
 
         # filter
         self.solver_output_filter = SecondOrderButterworthLowPass(Wn=0.25)
 
     # 回调函数
+    def joint_angle_subscriber_callback(self, msg):
+        self.get_pose_msg.position = msg.position
+
     def arm_control_timer_callback(self):
         try:
             tf_base_link_to_target_pose_matched = self.tf_buffer.lookup_transform(
@@ -51,8 +64,9 @@ class RcControlNode(Node):
             return
 
         target_matrix = self.transform_to_4x4(tf_base_link_to_target_pose_matched.transform)
+    
+        control_joint_angles, success_flag = self.arm_slover.ik(target_matrix, q0=self.get_pose_msg.position if self.get_pose_msg is not None else np.zeros(6))
 
-        control_joint_angles, success_flag = self.arm_slover.ik(target_matrix)
 
         if success_flag:
             control_msg = JointState()
@@ -99,16 +113,17 @@ class ArmSlover:
         """
         self.robot = rtb.ERobot.URDF(urdf_path)
 
-    def ik(self, target):
+    def ik(self, target, q0=np.zeros(6)):
         """
         逆运动学解算得到关节角度
         Args:
             target: matrix-like 4x4
+            q0: array-like, 初始关节角度
         Returns:
             thetas: array-like, 关节角度
             success: bool, 是否成功求解, 成功1, 失败0
         """
-        result = self.robot.ik_LM(target,q0=np.zeros(6))
+        result = self.robot.ik_LM(target,q0=q0)
         return result[0], result[1]
 
 def main(args=None):

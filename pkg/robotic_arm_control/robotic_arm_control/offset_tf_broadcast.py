@@ -1,10 +1,12 @@
 import math
+import time
 import rclpy
 from rclpy.node import Node
 from tf2_ros import StaticTransformBroadcaster, TransformStamped
 from tf_transformations import quaternion_from_euler, quaternion_multiply
 import numpy as np
 import tf2_ros
+from sensor_msgs.msg import JointState
 import tf_transformations
 
 class OffsetTfBroadcastNode(Node):
@@ -12,8 +14,16 @@ class OffsetTfBroadcastNode(Node):
         super().__init__('offset_tf_broadcast_node')
 
         # flag
+        self.init_pose_used = False
         self.pre_offset_used = False
         self.post_offset_used = False
+
+        # pub
+        self.init_joint_angle_publisher = self.create_publisher(
+            JointState,
+            '/joint_states',
+            10
+        )
 
         # tf listener
         self.tf_buffer = tf2_ros.Buffer()
@@ -24,26 +34,47 @@ class OffsetTfBroadcastNode(Node):
         self.static_post_offset_tf_broadcaster = StaticTransformBroadcaster(self)
 
         # timer
-        self.pre_offset_single_use_timer = self.create_timer(3, self.pre_offset_single_use_timer_callback)
-        self.post_offset_single_use_timer = self.create_timer(7, self.post_offset_single_use_timer_callback)
+        self.init_pose_single_use_timer = self.create_timer(3, self.init_pose_single_use_timer_callback)
+        self.pre_offset_single_use_timer = self.create_timer(1, self.pre_offset_single_use_timer_callback)
+        self.post_offset_single_use_timer = self.create_timer(1, self.post_offset_single_use_timer_callback)
         
 
     # 回调函数
-    def pre_offset_single_use_timer_callback(self):
-        if self.pre_offset_used:
+    def init_pose_single_use_timer_callback(self):
+        if self.init_pose_used:
             return
         
-        tf_rc_odom_to_target_pose = self.tf_buffer.lookup_transform(
-            source_frame='target_pose',
-            target_frame='rc_odom',
-            time=rclpy.time.Time()
-        )
+        control_msg = JointState()
+        control_msg.header.stamp = self.get_clock().now().to_msg()
+        control_msg.header.frame_id = ''
+        control_msg.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
+        control_msg.position = [0.0, 0.7, -1.04, -0.2, 0.2, 0.3]
 
-        tf_base_link_to_link6 = self.tf_buffer.lookup_transform(
-            source_frame='link6',
-            target_frame='base_link',
-            time=rclpy.time.Time()
-        )
+        self.init_joint_angle_publisher.publish(control_msg)
+
+        self.get_logger().info(f"发布init pose")
+
+        self.init_pose_used = True
+        
+
+    def pre_offset_single_use_timer_callback(self):
+        if self.pre_offset_used or not self.init_pose_used:
+            return
+        
+        try:
+            tf_rc_odom_to_target_pose = self.tf_buffer.lookup_transform(
+                source_frame='target_pose',
+                target_frame='rc_odom',
+                time=rclpy.time.Time()
+            )
+
+            tf_base_link_to_link6 = self.tf_buffer.lookup_transform(
+                source_frame='link6',
+                target_frame='base_link',
+                time=rclpy.time.Time()
+            )
+        except:
+            return
 
         tf_base_link_to_link6_quat = [tf_base_link_to_link6.transform.rotation.x,
              tf_base_link_to_link6.transform.rotation.y,
@@ -71,23 +102,35 @@ class OffsetTfBroadcastNode(Node):
 
         self.static_pre_offset_tf_broadcaster.sendTransform(tf_base_link_to_rc_odom)
 
+        self.get_logger().info(f"发布pre-offset tf")
+
         self.pre_offset_used = True
 
     def post_offset_single_use_timer_callback(self):
-        if self.post_offset_used:
+        if self.post_offset_used or not self.init_pose_used:
             return
-        
-        tf_base_link_to_target_pose = self.tf_buffer.lookup_transform(
-            source_frame='target_pose',
-            target_frame='base_link',
-            time=rclpy.time.Time()
-        )
 
-        tf_base_link_to_link6 = self.tf_buffer.lookup_transform(
-            source_frame='link6',
-            target_frame='base_link',
-            time=rclpy.time.Time()
-        )
+        try:
+            # 保证pre-offset tf已经发布
+            self.tf_buffer.lookup_transform(
+                source_frame='rc_odom',
+                target_frame='base_link',
+                time=rclpy.time.Time()
+            )
+            
+            tf_base_link_to_target_pose = self.tf_buffer.lookup_transform(
+                source_frame='target_pose',
+                target_frame='base_link',
+                time=rclpy.time.Time()
+            )
+
+            tf_base_link_to_link6 = self.tf_buffer.lookup_transform(
+                source_frame='link6',
+                target_frame='base_link',
+                time=rclpy.time.Time()
+            )
+        except:
+            return
 
         tf_target_pose_to_target_pose_matched = self.calculate_post_offset_tf(
             tf_base_link_to_target_pose,
@@ -97,6 +140,8 @@ class OffsetTfBroadcastNode(Node):
         tf_target_pose_to_target_pose_matched.header.stamp = self.get_clock().now().to_msg()
 
         self.static_post_offset_tf_broadcaster.sendTransform(tf_target_pose_to_target_pose_matched)
+
+        self.get_logger().info(f"发布post-offset tf")
 
         self.post_offset_used = True
 
