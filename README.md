@@ -5,7 +5,7 @@ sudo apt-get update
 sudo apt install ros-$ROS_DISTRO-moveit
 ```
 
-安装can依赖,can工具,科学计算库,Piper 机械臂SDK,ros2-control,gui
+安装can依赖,can工具,科学计算库,Piper 机械臂SDK,ros2-control,gui,imu-tools,imu-filter-madgwick,卸载brltty(冲突)
 ```bash
 pip3 install python-can
 pip3 install scipy
@@ -16,6 +16,9 @@ sudo apt install ros-$ROS_DISTRO-controller-manager
 sudo apt install can-utils
 sudo apt install ethtool
 sudo apt install ros-$ROS_DISTRO-joint-state-publisher-gui
+sudo apt install ros-humble-imu-filter-madgwick
+sudo apt remove brltty
+sudo apt install ros-humble-imu-tools
 ```
 
 在ros2中安装驱动串口serial_driver

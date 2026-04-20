@@ -108,7 +108,10 @@ def generate_launch_description():
         package='process_serial_data',
         executable='pub_target_pose',
         name='publish_target_pose_node',
-        output='screen'
+        output='screen',
+        remappings=[
+            ('/imu/data', '/imu/data/filtered')
+        ]
     )
     ld.add_action(publish_target_pose_node)
 
@@ -118,9 +121,6 @@ def generate_launch_description():
         executable='tf_broadcast',
         name='broadcast_tf_node',
         output='screen',
-        remappings=[
-            ('/imu/data', '/imu/data/filtered')
-        ]
     )
     ld.add_action(broadcast_tf_node)
 

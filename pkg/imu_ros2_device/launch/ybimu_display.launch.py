@@ -45,11 +45,16 @@ def generate_launch_description():
         executable='imu_filter_madgwick_node',
         parameters=[imu_filter_config]
     )
+    filter_node = Node(
+        package='imu_ros2_device',
+        executable='imu_filter',
+    )
 
     return LaunchDescription([
         # rviz_arg,
         # rviz_node,
         device_node,
         imu_filter_node,
+        filter_node
     ])
 
