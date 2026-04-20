@@ -9,6 +9,7 @@ import numpy as np
 from sensor_msgs.msg import JointState
 from ament_index_python.packages import get_package_share_directory
 import os
+from filter.filter import SecondOrderButterworthLowPass
 
 class RcControlNode(Node):
     def __init__(self):
@@ -34,6 +35,9 @@ class RcControlNode(Node):
         robot_urdf_file_path = os.path.join(piper_description_path, 'urdf', 'piper_no_gripper_description.urdf')
         self.arm_slover = ArmSlover(robot_urdf_file_path) 
 
+        # filter
+        self.solver_output_filter = SecondOrderButterworthLowPass(Wn=0.25)
+
     # 回调函数
     def arm_control_timer_callback(self):
         try:
@@ -57,7 +61,8 @@ class RcControlNode(Node):
             control_msg.header.frame_id = ''
             
             control_msg.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
-            control_msg.position =  list(control_joint_angles)
+            control_msg.position =  self.solver_output_filter.filter_multiple(control_joint_angles)
+
             self.get_logger().info(f"IK 解算成功, 关节角度: {control_msg.position}")
             self.joint_angle_publisher.publish(control_msg)
         else:

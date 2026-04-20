@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from filter.filter import SecondOrderButterworthLowPass, FirstOrderLowPassFilter
+from filter.filter import SecondOrderButterworthLowPass
 from sensor_msgs.msg import Imu
 
 class imu_filter_node(Node):
