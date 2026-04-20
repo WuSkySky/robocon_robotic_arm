@@ -106,7 +106,7 @@ def generate_launch_description():
     #启动发布目标位姿
     publish_target_pose_node = Node(
         package='process_serial_data',
-        executable='pub_target_pose_yahboom_imu',
+        executable='pub_target_pose',
         name='publish_target_pose_node',
         output='screen'
     )

@@ -44,7 +44,6 @@ def generate_launch_description():
         package='imu_filter_madgwick',
         executable='imu_filter_madgwick_node',
         parameters=[imu_filter_config]
-        
     )
 
     return LaunchDescription([
