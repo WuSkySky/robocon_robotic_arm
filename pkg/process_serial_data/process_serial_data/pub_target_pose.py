@@ -59,7 +59,7 @@ class PubTargetPoseNode(Node):
 
         remote_input = np.array([
             data.rc_left_y * speed_factor,    # 遥控器左摇杆y控制x轴移动
-            data.rc_left_x * speed_factor,    # 遥控器左摇杆x控制y轴移动
+            -data.rc_left_x * speed_factor,    # 遥控器左摇杆x的相反数控制y轴移动
             data.rc_right_y * speed_factor    # 遥控器右摇杆y控制z轴移动
         ])
 
