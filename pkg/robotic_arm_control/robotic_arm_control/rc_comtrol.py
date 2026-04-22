@@ -113,7 +113,7 @@ class ArmSlover:
         """
         self.robot = rtb.ERobot.URDF(urdf_path)
 
-    def ik(self, target, q0=np.zeros(6)):
+    def ik(self, target, q0=np.zeros(6),start=None, end=None):
         """
         逆运动学解算得到关节角度
         Args:
@@ -123,6 +123,7 @@ class ArmSlover:
             thetas: array-like, 关节角度
             success: bool, 是否成功求解, 成功1, 失败0
         """
+        start = self.
         result = self.robot.ik_LM(target,q0=q0)
         return result[0], result[1]
 
