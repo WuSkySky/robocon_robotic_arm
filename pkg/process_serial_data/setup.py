@@ -26,6 +26,7 @@ setup(
         'console_scripts': [
             'unload_serial_data = process_serial_data.unload_serial_data:main',
             'pub_target_pose = process_serial_data.pub_target_pose:main',
+            'pub_gripper_control = process_serial_data.pub_gripper_control:main',
             'tf_broadcast = process_serial_data.tf_broadcast:main',
         ],
     },

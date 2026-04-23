@@ -7,6 +7,7 @@ import roboticstoolbox as rtb
 import numpy as np
 import numpy as np
 from sensor_msgs.msg import JointState
+from std_msgs.msg import Float64
 from ament_index_python.packages import get_package_share_directory
 import os
 from filter.filter import SecondOrderButterworthLowPass
@@ -27,6 +28,7 @@ class RcControlNode(Node):
         )
 
         # sub
+        # link1到link6的关节角度反馈
         self.joint_angle_subscriber = self.create_subscription(
             JointState,
             '/joint_states_single',
@@ -34,8 +36,17 @@ class RcControlNode(Node):
             10
         )
 
+        # 来自下位机器的夹爪控制命令
+        self.gripper_control_subscriber = self.create_subscription(
+            Float64,
+            '/gripper_control',
+            self.gripper_control_subscriber_callback,
+            10
+        )
+
         # timer
         self.arm_control_timer = self.create_timer(0.016, self.arm_control_timer_callback)
+        
         # flag
         self.first_pose = False
 
@@ -51,6 +62,9 @@ class RcControlNode(Node):
     # 回调函数
     def joint_angle_subscriber_callback(self, msg):
         self.get_pose_msg.position = msg.position
+    
+    def gripper_control_subscriber_callback(self, msg):
+        self.gripper_control_angle = msg.data
 
     def arm_control_timer_callback(self):
         try:
@@ -59,14 +73,15 @@ class RcControlNode(Node):
                 target_frame='base_link',
                 time=rclpy.time.Time()
             )
+            _ = self.gripper_control_angle
+
         except Exception as e:
-            self.get_logger().warn(f"rc_control获取tf失败,等待tf中...")
+            self.get_logger().warn(f"rc_control_node 获取目标 tf 或夹爪控制命令失败,等待上游数据...")
             return
 
         target_matrix = self.transform_to_4x4(tf_base_link_to_target_pose_matched.transform)
     
         control_joint_angles, success_flag = self.arm_slover.ik(target_matrix, q0=self.get_pose_msg.position if self.get_pose_msg is not None else np.zeros(6))
-
 
         if success_flag:
             control_msg = JointState()
@@ -74,14 +89,15 @@ class RcControlNode(Node):
             control_msg.header.stamp = self.get_clock().now().to_msg()
             control_msg.header.frame_id = ''
             
-            control_msg.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
-            control_msg.position =  self.solver_output_filter.filter_multiple(control_joint_angles)
+            control_msg.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6', 'joint7']
+            control_msg.position =  self.solver_output_filter.filter_multiple(list(control_joint_angles)+[self.gripper_control_angle])
 
             self.get_logger().info(f"IK 解算成功, 关节角度: {control_msg.position}")
             self.joint_angle_publisher.publish(control_msg)
         else:
             self.get_logger().warn(f"IK 解算失败")
 
+    # 工具函数
     def transform_to_4x4(self, transform):
         """
         将 geometry_msgs/Transform 转换为 4x4 矩阵
@@ -123,7 +139,6 @@ class ArmSlover:
             thetas: array-like, 关节角度
             success: bool, 是否成功求解, 成功1, 失败0
         """
-        start = self.
         result = self.robot.ik_LM(target,q0=q0)
         return result[0], result[1]
 

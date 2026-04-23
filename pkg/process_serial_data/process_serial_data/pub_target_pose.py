@@ -39,7 +39,6 @@ class PubTargetPoseNode(Node):
     # 回调函数
     def unloaded_serial_data_received_callback(self, msg):
         self.unloaded_serial_data = msg
-        self.start_process_data_flag = True
 
     def imu_data_callback(self, msg):
         self.latest_imu = msg    
@@ -54,7 +53,7 @@ class PubTargetPoseNode(Node):
         self.pub_pose(self.unloaded_serial_data,self.latest_imu)
 
     def pub_pose(self,data,data_imu):
-        speed_factor=self.delta_time_process_data*0.0001
+        speed_factor=self.delta_time_process_data*0.00015
         pose_msg = Pose()
 
         remote_input = np.array([

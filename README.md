@@ -108,6 +108,11 @@ ros2 run process_serial_data pub_target_pose
 ros2 run process_serial_data tf_broadcast
 ```
 
+启动发布来自下位机的夹爪控制消息
+```bash
+ros2 run process_serial_data pub_gripper_control
+```
+
 启动变换后的tf
 ```bash
 ros2 run robotic_arm_control offset_tf_broadcast

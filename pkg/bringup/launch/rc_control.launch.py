@@ -94,7 +94,7 @@ def generate_launch_description():
 
     ld.add_action(imu_launch)
 
-    #启动解包串口数据
+    # 启动解包串口数据
     unload_serial_data_node = Node(
         package='process_serial_data',
         executable='unload_serial_data',
@@ -103,7 +103,7 @@ def generate_launch_description():
     )
     ld.add_action(unload_serial_data_node)
 
-    #启动发布目标位姿
+    # 启动发布目标位姿
     publish_target_pose_node = Node(
         package='process_serial_data',
         executable='pub_target_pose',
@@ -115,7 +115,7 @@ def generate_launch_description():
     )
     ld.add_action(publish_target_pose_node)
 
-    #启动广播tf
+    # 启动广播tf
     broadcast_tf_node = Node(
         package='process_serial_data',
         executable='tf_broadcast',
@@ -124,7 +124,16 @@ def generate_launch_description():
     )
     ld.add_action(broadcast_tf_node)
 
-    #启动变换后的tf
+    # 启动发送夹爪控制命令的节点
+    pub_gripper_control_node = Node(
+        package='process_serial_data',
+        executable='pub_gripper_control',
+        name='pub_gripper_control_node',
+        output='screen'
+    )
+    ld.add_action(pub_gripper_control_node)
+
+    # 启动发布纠正tf
     broadcast_offset_tf_node = Node(
         package='robotic_arm_control',
         executable='offset_tf_broadcast',
@@ -133,8 +142,7 @@ def generate_launch_description():
     )
     ld.add_action(broadcast_offset_tf_node)
 
-
-    #启动遥控器控制
+    # 启动遥控器控制
     rc_control_node = Node(
         package='robotic_arm_control',
         executable='rc_control',
