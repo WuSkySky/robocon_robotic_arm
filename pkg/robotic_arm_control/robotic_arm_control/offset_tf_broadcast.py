@@ -54,6 +54,10 @@ class OffsetTfBroadcastNode(Node):
 
         self.get_logger().info(f"发布init pose")
 
+        self.start_time = time.time()
+        while time.time() - self.start_time < 2:
+            rclpy.spin_once(self, timeout_sec=0.3)
+
         self.init_pose_used = True
         
 
