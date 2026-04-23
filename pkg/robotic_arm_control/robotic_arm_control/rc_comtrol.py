@@ -67,32 +67,45 @@ class RcControlNode(Node):
         self.gripper_control_angle = msg.data
 
     def arm_control_timer_callback(self):
+        # 等待上游数据
         try:
             tf_base_link_to_target_pose_matched = self.tf_buffer.lookup_transform(
                 source_frame='target_pose_matched',
                 target_frame='base_link',
                 time=rclpy.time.Time()
             )
+
             _ = self.gripper_control_angle
 
         except Exception as e:
             self.get_logger().warn(f"rc_control_node 获取目标 tf 或夹爪控制命令失败,等待上游数据...")
             return
 
+        # 从tf中获取目标位姿
         target_matrix = self.transform_to_4x4(tf_base_link_to_target_pose_matched.transform)
-    
-        control_joint_angles, success_flag = self.arm_slover.ik(target_matrix, q0=self.get_pose_msg.position if self.get_pose_msg is not None else np.zeros(6))
+        
+        # 位置和姿态分解逆运动学解算
+        joint_1_to_3_ctrl_angle, position_success_flag = self.arm_slover.ik_position(
+            target_matrix,
+            q0=self.get_pose_msg.position[:4] if self.get_pose_msg is not None else np.zeros(4),
+        )
 
-        if success_flag:
+        joint_4_to_6_ctrl_angle, orientation_success_flag = self.arm_slover.ik_orientation(
+            target_matrix,
+            q0=self.get_pose_msg.position[3:6] if self.get_pose_msg is not None else np.zeros(3),
+        )
+
+        # 发布控制命令话题
+        if position_success_flag and orientation_success_flag:
+            joint_ctrl_angle= list(joint_1_to_3_ctrl_angle) + list(joint_4_to_6_ctrl_angle) + [self.gripper_control_angle]
+
             control_msg = JointState()
 
             control_msg.header.stamp = self.get_clock().now().to_msg()
             control_msg.header.frame_id = ''
-            
             control_msg.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6', 'joint7']
-            control_msg.position =  self.solver_output_filter.filter_multiple(list(control_joint_angles)+[self.gripper_control_angle])
+            control_msg.position =  self.solver_output_filter.filter_multiple(joint_ctrl_angle)
 
-            self.get_logger().info(f"IK 解算成功, 关节角度: {control_msg.position}")
             self.joint_angle_publisher.publish(control_msg)
         else:
             self.get_logger().warn(f"IK 解算失败")
@@ -127,20 +140,39 @@ class ArmSlover:
         Args:
             urdf_path: str, URDF文件路径
         """
-        self.robot = rtb.ERobot.URDF(urdf_path)
 
-    def ik(self, target, q0=np.zeros(6),start=None, end=None):
+        self.robot = rtb.ERobot.URDF(urdf_path)
+        
+        self.init_matrix_base_link_to_link4 = self.robot.fkine([0,0,0,0,0,0], start=self.robot.links[0], end=self.robot.links[3]) 
+    
+    def ik_position(self, target, q0):
         """
-        逆运动学解算得到关节角度
+        逆运动学解算得到关节角度, 仅位置约束
         Args:
-            target: matrix-like 4x4
+            target: matrix-like 4x4 base_link到target的变换矩阵
             q0: array-like, 初始关节角度
         Returns:
             thetas: array-like, 关节角度
-            success: bool, 是否成功求解, 成功1, 失败0
+            success: bool, 是否成功求解
         """
-        result = self.robot.ik_LM(target,q0=q0)
-        return result[0], result[1]
+
+        result = self.robot.ikine_LM(target,q0=q0,start=self.robot.links[0],end=self.robot.links[4],mask=[1, 1, 1, 0, 0, 0])
+        return result.q[:3], result.success
+    
+    def ik_orientation(self, target, q0):
+        """
+        逆运动学解算得到关节角度, 仅姿态约束
+        Args:
+            target: matrix-like 4x4 base_link到target的变换矩阵
+            q0: array-like, 初始关节角度
+        Returns:
+            thetas: array-like, 关节角度
+            success: bool, 是否成功求解
+        """
+
+        target_matched = np.linalg.inv(self.init_matrix_base_link_to_link4)@target 
+        result = self.robot.ikine_LM(target_matched,q0=q0,start=self.robot.links[4],end=self.robot.links[6],mask=[0, 0, 0, 1, 1, 1])
+        return result.q, result.success
 
 def main(args=None):
     rclpy.init(args=args)
