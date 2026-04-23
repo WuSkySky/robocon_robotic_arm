@@ -73,17 +73,37 @@ class RcControlNode(Node):
                 target_frame='base_link',
                 time=rclpy.time.Time()
             )
-            _ = self.gripper_control_angle
+            tf_target_pose_matched_to_final_pose = self.tf_buffer.lookup_transform(
+                source_frame='link6',
+                target_frame='base_link',
+                time=rclpy.time.Time()
+            )
 
+            _ = self.gripper_control_angle
         except Exception as e:
             self.get_logger().warn(f"rc_control_node 获取目标 tf 或夹爪控制命令失败,等待上游数据...")
             return
 
-        target_matrix = self.transform_to_4x4(tf_base_link_to_target_pose_matched.transform)
+        target_matrix_pose_matched = self.transform_to_4x4(tf_base_link_to_target_pose_matched.transform)
+        target_matrix_final = self.transform_to_4x4(tf_target_pose_matched_to_final_pose.transform)
     
-        control_joint_angles, success_flag = self.arm_slover.ik(target_matrix, q0=self.get_pose_msg.position if self.get_pose_msg is not None else np.zeros(6))
+        control_joint_towards, success_flag_towards = self.arm_slover.ik(
+            target_matrix_final, 
+            q0=self.get_pose_msg.position[3:6] if self.get_pose_msg.position[3:6] is not None else np.zeros(3),
+            start=4,  # 从当前关节角度开始解算
+            end=6,
+            mask=[0, 0, 0, 1, 1, 1]  # 只考虑末端执行器的角度
+            )
+        control_joint_base, success_flag_angles = self.arm_slover.ik(
+            target_matrix_pose_matched, 
+            q0=self.get_pose_msg.position[0:3] if self.get_pose_msg.position[0:3] is not None else np.zeros(3),
+            start=1,  # 从当前关节角度开始解算
+            end=3,
+            mask=[1, 1, 1, 0, 0, 0]  # 只考虑基座的姿态
+            )
+        control_joint_angles = control_joint_base[0:3].tolist() + control_joint_towards[3:6].tolist()
 
-        if success_flag:
+        if success_flag_towards and success_flag_angles:
             control_msg = JointState()
 
             control_msg.header.stamp = self.get_clock().now().to_msg()
@@ -129,7 +149,7 @@ class ArmSlover:
         """
         self.robot = rtb.ERobot.URDF(urdf_path)
 
-    def ik(self, target, q0=np.zeros(6),start=None, end=None):
+    def ik(self, target, q0=np.zeros(6),start=None, end=None, mask=[]):
         """
         逆运动学解算得到关节角度
         Args:
@@ -139,9 +159,9 @@ class ArmSlover:
             thetas: array-like, 关节角度
             success: bool, 是否成功求解, 成功1, 失败0
         """
-        result = self.robot.ik_LM(target,q0=q0)
-        return result[0], result[1]
 
+        result = self.robot.ikine_LM(target,q0=q0,start=self.robot.links[start],end=self.robot.links[end],mask=mask)
+        return result[0], result[1]
 def main(args=None):
     rclpy.init(args=args)
     node = RcControlNode()
