@@ -28,6 +28,8 @@ setup(
             'pub_target_pose = process_serial_data.pub_target_pose:main',
             'pub_gripper_control = process_serial_data.pub_gripper_control:main',
             'tf_broadcast = process_serial_data.tf_broadcast:main',
+            'pub_target_pose_imu = process_serial_data.pub_target_pose_imu:main',
+            'pub_target_pose_imu_multi = process_serial_data.pub_target_pose_imu_multi:main'
         ],
     },
 )

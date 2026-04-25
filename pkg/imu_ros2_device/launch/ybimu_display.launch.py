@@ -31,7 +31,7 @@ def generate_launch_description():
 
     device_node = Node(
         package='imu_ros2_device',
-        executable='ybimu_driver',
+        executable='ybimu_driver_multi',
     )
 
     imu_filter_config = os.path.join(              
@@ -40,10 +40,26 @@ def generate_launch_description():
         'imu_filter_param.yaml'
     )
 
-    imu_filter_node = Node(
+    imu_filter_node0= Node(
         package='imu_filter_madgwick',
         executable='imu_filter_madgwick_node',
-        parameters=[imu_filter_config]
+        parameters=[imu_filter_config],
+        remappings=[('imu/data_raw','/imu0/data_raw')]
+    )
+
+    imu_filter_node1= Node(
+        package='imu_filter_madgwick',
+        executable='imu_filter_madgwick_node',
+        parameters=[imu_filter_config],
+        remappings=[('imu/data_raw','/imu1/data_raw')]
+
+    )
+
+    imu_filter_node2= Node(
+        package='imu_filter_madgwick',
+        executable='imu_filter_madgwick_node',
+        parameters=[imu_filter_config],
+        remappings=[('imu/data_raw','/imu2/data_raw')]
     )
     filter_node = Node(
         package='imu_ros2_device',
@@ -54,7 +70,10 @@ def generate_launch_description():
         # rviz_arg,
         # rviz_node,
         device_node,
-        imu_filter_node,
+        imu_filter_node0,
+        imu_filter_node1,
+        imu_filter_node2,
+
         filter_node
     ])
 

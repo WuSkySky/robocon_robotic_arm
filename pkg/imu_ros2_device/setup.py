@@ -26,7 +26,8 @@ setup(
     entry_points={
         'console_scripts': [
             'ybimu_driver = imu_ros2_device.ybimu_driver:main',
-            'imu_filter = imu_ros2_device.imu_filter:main'
+            'imu_filter = imu_ros2_device.imu_filter:main',
+            'ybimu_driver_multi = imu_ros2_device.ybimu_driver_multi:main',
         ],
     },
 )
