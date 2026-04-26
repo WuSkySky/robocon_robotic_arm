@@ -65,6 +65,11 @@ def generate_launch_description():
         package='imu_ros2_device',
         executable='imu_filter',
     )
+    imu_muti_tf_node = Node(
+        package='imu_ros2_device',
+        executable='ybimu_driver_tf',
+    )
+
 
     return LaunchDescription([
         # rviz_arg,
@@ -74,6 +79,7 @@ def generate_launch_description():
         imu_filter_node1,
         imu_filter_node2,
 
-        filter_node
+        filter_node,
+        imu_muti_tf_node,
     ])
 

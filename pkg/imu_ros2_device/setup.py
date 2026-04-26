@@ -28,6 +28,7 @@ setup(
             'ybimu_driver = imu_ros2_device.ybimu_driver:main',
             'imu_filter = imu_ros2_device.imu_filter:main',
             'ybimu_driver_multi = imu_ros2_device.ybimu_driver_multi:main',
+            'ybimu_driver_tf = imu_ros2_device.ybimu_driver_tf:main',
         ],
     },
 )
