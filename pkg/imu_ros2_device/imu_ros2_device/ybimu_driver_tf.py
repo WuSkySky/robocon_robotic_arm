@@ -1,13 +1,9 @@
-import math
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Pose
 from tf2_ros import StaticTransformBroadcaster, TransformStamped
-from tf_transformations import quaternion_from_euler, quaternion_multiply
 from sensor_msgs.msg import Imu 
-import numpy as np
 import tf2_ros
-import tf_transformations
+
 class ImuMutiBroadcastNode(Node):
     def __init__(self):
         super().__init__('imu_tf_broadcast_node')
@@ -22,20 +18,20 @@ class ImuMutiBroadcastNode(Node):
         # 接收Imu数据的订阅者
         self.subscription = self.create_subscription(
             Imu,                      # 消息类型
-            '/imu0/data_raw',                # 话题名
+            '/imu0/data',                # 话题名
             self.imu0_data_received_callback,      # 回调函数
             10                           # 队列长度
         )
 
         self.subscription = self.create_subscription(
             Imu,                      # 消息类型
-            '/imu1/data_raw',                # 话题名
+            '/imu1/data',                # 话题名
             self.imu1_data_received_callback,      # 回调函数
             10                           # 队列长度
         )
         self.subscription = self.create_subscription(
             Imu,                      # 消息类型
-            '/imu2/data_raw',                # 话题名
+            '/imu2/data',                # 话题名
             self.imu2_data_received_callback,      # 回调函数
             10                           # 队列长度
         )
@@ -49,6 +45,8 @@ class ImuMutiBroadcastNode(Node):
         收到 /imu0/data_raw 消息发送tf的回调函数。
         """
         # 填充时间戳和坐标系 ID
+        # print("test")
+        self.get_logger().info("test")
         t0 = TransformStamped()
         t0.header.stamp = self.get_clock().now().to_msg()
         t0.header.frame_id = 'imu1_link'

@@ -44,14 +44,21 @@ def generate_launch_description():
         package='imu_filter_madgwick',
         executable='imu_filter_madgwick_node',
         parameters=[imu_filter_config],
-        remappings=[('imu/data_raw','/imu0/data_raw')]
+        remappings=[('imu/data_raw','/imu0/data_raw'),
+                    ('imu/mag','/imu0/mag'),
+                    ('/imu/data','/imu0/data'),]
+        
+        
     )
 
     imu_filter_node1= Node(
         package='imu_filter_madgwick',
         executable='imu_filter_madgwick_node',
         parameters=[imu_filter_config],
-        remappings=[('imu/data_raw','/imu1/data_raw')]
+        remappings=[('imu/data_raw','/imu1/data_raw'),
+                    ('imu/mag','/imu1/mag'),
+                    ('/imu/data','/imu1/data'),]
+        
 
     )
 
@@ -59,17 +66,21 @@ def generate_launch_description():
         package='imu_filter_madgwick',
         executable='imu_filter_madgwick_node',
         parameters=[imu_filter_config],
-        remappings=[('imu/data_raw','/imu2/data_raw')]
+        remappings=[('imu/data_raw','/imu2/data_raw'),
+                    ('imu/mag','/imu2/mag'),
+                    ('/imu/data','/imu2/data'),]
+    
     )
-    filter_node = Node(
-        package='imu_ros2_device',
-        executable='imu_filter',
-    )
+
+    # filter_node = Node(
+    #     package='imu_ros2_device',
+    #     executable='imu_filter',
+    # )
+
     imu_muti_tf_node = Node(
         package='imu_ros2_device',
         executable='ybimu_driver_tf',
     )
-
 
     return LaunchDescription([
         # rviz_arg,
@@ -79,7 +90,7 @@ def generate_launch_description():
         imu_filter_node1,
         imu_filter_node2,
 
-        filter_node,
+        # filter_node,
         imu_muti_tf_node,
     ])
 
