@@ -46,9 +46,7 @@ def generate_launch_description():
         parameters=[imu_filter_config],
         remappings=[('imu/data_raw','/imu0/data_raw'),
                     ('imu/mag','/imu0/mag'),
-                    ('/imu/data','/imu0/data'),]
-        
-        
+                    ('/imu/data','/imu0/data'),]   
     )
 
     imu_filter_node1= Node(
@@ -58,8 +56,6 @@ def generate_launch_description():
         remappings=[('imu/data_raw','/imu1/data_raw'),
                     ('imu/mag','/imu1/mag'),
                     ('/imu/data','/imu1/data'),]
-        
-
     )
 
     imu_filter_node2= Node(
@@ -72,10 +68,32 @@ def generate_launch_description():
     
     )
 
-    # filter_node = Node(
-    #     package='imu_ros2_device',
-    #     executable='imu_filter',
-    # )
+    filter_node0 = Node(
+        package='imu_ros2_device',
+        executable='imu_filter',
+        remappings=[
+            ('/imu/data','/imu0/data'),
+            ('/imu/data/filtered','/imu0/data/filtered')
+        ]
+    )
+
+    filter_node1 = Node(
+        package='imu_ros2_device',
+        executable='imu_filter',
+        remappings=[
+            ('/imu/data','/imu1/data'),
+            ('/imu/data/filtered','/imu1/data/filtered')
+        ]
+    )
+
+    filter_node2 = Node(
+        package='imu_ros2_device',
+        executable='imu_filter',
+        remappings=[
+            ('/imu/data','/imu2/data'),
+            ('/imu/data/filtered','/imu2/data/filtered')
+        ]
+    )
 
     imu_muti_tf_node = Node(
         package='imu_ros2_device',
@@ -83,14 +101,13 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        # rviz_arg,
-        # rviz_node,
         device_node,
         imu_filter_node0,
         imu_filter_node1,
         imu_filter_node2,
-
-        # filter_node,
+        filter_node0,
+        filter_node1,
+        filter_node2,
         imu_muti_tf_node,
     ])
 

@@ -84,7 +84,7 @@ class RcControlNode(Node):
         # 从tf中获取目标位姿
         target_matrix = self.transform_to_4x4(tf_base_link_to_target_pose_matched.transform)
         
-        # 位置和姿态分解逆运动学解算
+        # 位置和姿态分别逆运动学解算
         joint_1_to_3_ctrl_angle, position_success_flag = self.arm_slover.ik_position(
             target_matrix,
             q0=self.get_pose_msg.position[:4] if self.get_pose_msg is not None else np.zeros(4),

@@ -85,7 +85,7 @@ def generate_launch_description():
     imu_launch_file = os.path.join(
         get_package_share_directory('imu_ros2_device'), 
         'launch',                      
-        'single_imu.launch.py'                
+        'mutil_imu.launch.py'                
     )
 
     imu_launch = IncludeLaunchDescription(
@@ -103,27 +103,6 @@ def generate_launch_description():
     )
     ld.add_action(unload_serial_data_node)
 
-    # 启动发布目标位姿
-    publish_target_pose_node = Node(
-        package='process_serial_data',
-        executable='pub_target_pose',
-        name='publish_target_pose_node',
-        output='screen',
-        remappings=[
-            ('/imu/data', '/imu/data/filtered')
-        ]
-    )
-    ld.add_action(publish_target_pose_node)
-
-    # 启动广播tf
-    broadcast_tf_node = Node(
-        package='process_serial_data',
-        executable='tf_broadcast',
-        name='broadcast_tf_node',
-        output='screen',
-    )
-    ld.add_action(broadcast_tf_node)
-
     # 启动发送夹爪控制命令的节点
     pub_gripper_control_node = Node(
         package='process_serial_data',
@@ -136,7 +115,7 @@ def generate_launch_description():
     # 启动发布纠正tf
     broadcast_offset_tf_node = Node(
         package='robotic_arm_control',
-        executable='offset_tf_broadcast',
+        executable='offset_tf_broadcast_arm_control',
         name='broadcast_offset_tf_node',
         output='screen'
     )

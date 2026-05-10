@@ -18,20 +18,20 @@ class ImuMutiBroadcastNode(Node):
         # 接收Imu数据的订阅者
         self.subscription = self.create_subscription(
             Imu,                      # 消息类型
-            '/imu0/data',                # 话题名
+            '/imu0/data/filtered',                # 话题名
             self.imu0_data_received_callback,      # 回调函数
             10                           # 队列长度
         )
 
         self.subscription = self.create_subscription(
             Imu,                      # 消息类型
-            '/imu1/data',                # 话题名
+            '/imu1/data/filtered',                # 话题名
             self.imu1_data_received_callback,      # 回调函数
             10                           # 队列长度
         )
         self.subscription = self.create_subscription(
             Imu,                      # 消息类型
-            '/imu2/data',                # 话题名
+            '/imu2/data/filtered',                # 话题名
             self.imu2_data_received_callback,      # 回调函数
             10                           # 队列长度
         )
@@ -49,10 +49,10 @@ class ImuMutiBroadcastNode(Node):
         self.get_logger().info("test")
         t0 = TransformStamped()
         t0.header.stamp = self.get_clock().now().to_msg()
-        t0.header.frame_id = 'imu1_link'
+        t0.header.frame_id = 'arm_base_link'
         t0.child_frame_id = 'imu0_link'
 
-        t0.transform.translation.x = 2.0
+        t0.transform.translation.x = 0.25
         t0.transform.translation.y = 0.0
         t0.transform.translation.z = 0.0
 
@@ -68,10 +68,10 @@ class ImuMutiBroadcastNode(Node):
         """
         t1 = TransformStamped()
         t1.header.stamp = self.get_clock().now().to_msg()
-        t1.header.frame_id = 'imu2_link'
+        t1.header.frame_id = 'imu0_link'
         t1.child_frame_id = 'imu1_link'
 
-        t1.transform.translation.x = 2.0
+        t1.transform.translation.x = 0.35
         t1.transform.translation.y = 0.0
         t1.transform.translation.z = 0.0
 
@@ -87,8 +87,8 @@ class ImuMutiBroadcastNode(Node):
         """
         t2 = TransformStamped()
         t2.header.stamp = self.get_clock().now().to_msg()
-        t2.header.frame_id = 'base_link'
-        t2.child_frame_id = 'imu2_link'
+        t2.header.frame_id = 'imu1_link'
+        t2.child_frame_id = 'target_pose'
 
         t2.transform.translation.x = 0.0
         t2.transform.translation.y = 0.0
