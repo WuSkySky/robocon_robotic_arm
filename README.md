@@ -64,6 +64,7 @@ sudo chmod 666 /dev/ttyACM0
 launch 启动
 ```bash
 ros2 launch bringup rc_control.launch.py 
+ros2 launch bringup arm_control.launch.py 
 ```
 
 #### 分布启动
@@ -85,6 +86,20 @@ bash ./pkg/piper/find_all_can_port.sh
 配置波特率
 ```bash
 bash ./pkg/piper/can_activate.sh can0 1000000
+```
+配置对应/dev/imu*
+```bash
+#查询 KERNELS参数
+
+sudo udevadm info -a -n /dev/ttyUSB0 | grep KERNELS     
+#根据插入固定usb位置，编写/dev/imu*，创建物理接口位置与imu映射,可以避免插入顺序引发的/dev/ttyUSB*乱飘
+
+sudo nano /etc/udev/rules.d/99-imu.rules  
+ACTION=="add", SUBSYSTEM=="tty", KERNELS=="1-5.2:1.0", SYMLINK+="imu0"
+ACTION=="add", SUBSYSTEM=="tty", KERNELS=="1-5.3:1.0", SYMLINK+="imu1"
+ACTION=="add", SUBSYSTEM=="tty", KERNELS=="1-5.4:1.0", SYMLINK+="imu2"
+
+#提供一个方向，可以写入imu来给imu一个独特的id: 通过修改内部寄存器来设置一个可自定义的 ID
 ```
 
 两种启动方式（前者不带rviz）
