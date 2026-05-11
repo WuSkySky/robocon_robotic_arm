@@ -103,6 +103,10 @@ class OffsetTfBroadcastNode(Node):
         )
         tf_base_link_to_rc_odom.child_frame_id = 'arm_base_link'
         tf_base_link_to_rc_odom.header.stamp = self.get_clock().now().to_msg()
+        tf_base_link_to_rc_odom.transform.rotation.x=0.0
+        tf_base_link_to_rc_odom.transform.rotation.y=0.0
+        tf_base_link_to_rc_odom.transform.rotation.z=0.0
+        tf_base_link_to_rc_odom.transform.rotation.w=1.0
 
         self.static_pre_offset_tf_broadcaster.sendTransform(tf_base_link_to_rc_odom)
 

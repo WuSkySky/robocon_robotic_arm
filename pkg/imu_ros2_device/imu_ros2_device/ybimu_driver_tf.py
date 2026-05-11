@@ -52,7 +52,7 @@ class ImuMutiBroadcastNode(Node):
         t0.header.frame_id = 'arm_base_link'
         t0.child_frame_id = 'imu0_link'
 
-        t0.transform.translation.x = 0.25
+        t0.transform.translation.x = 0.0
         t0.transform.translation.y = 0.0
         t0.transform.translation.z = 0.0
 
@@ -71,7 +71,7 @@ class ImuMutiBroadcastNode(Node):
         t1.header.frame_id = 'imu0_link'
         t1.child_frame_id = 'imu1_link'
 
-        t1.transform.translation.x = 0.35
+        t1.transform.translation.x = 0.25
         t1.transform.translation.y = 0.0
         t1.transform.translation.z = 0.0
 
@@ -90,7 +90,7 @@ class ImuMutiBroadcastNode(Node):
         t2.header.frame_id = 'imu1_link'
         t2.child_frame_id = 'target_pose'
 
-        t2.transform.translation.x = 0.0
+        t2.transform.translation.x = 0.15
         t2.transform.translation.y = 0.0
         t2.transform.translation.z = 0.0
 
