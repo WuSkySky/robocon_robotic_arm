@@ -74,8 +74,8 @@ service 服务的命令行
 #这个是用来查询服务列表的，把"align_imu"服务滤过出来,看是否存在
 ros2 service list | grep align_imu 
 #这个两个是用来控制对齐服务的， 你确保你手臂水平,就命令行输入true,取消对齐就false
-ros2 service call /align_imu example_interfaces/srv/SetBool "{data: true}"
-ros2 service call /align_imu example_interfaces/srv/SetBool "{data: false}"
+ros2 service call /align_imu interface/srv/AlignImu "{data: true}"
+ros2 service call /align_imu interface/srv/AlignImu "{data: false}"
 ```
 
 

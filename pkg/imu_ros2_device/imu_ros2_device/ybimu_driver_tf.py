@@ -46,10 +46,9 @@ class ImuMutiBroadcastNode(Node):
         """
         # 填充时间戳和坐标系 ID
         # print("test")
-        self.get_logger().info("test")
         t0 = TransformStamped()
         t0.header.stamp = self.get_clock().now().to_msg()
-        t0.header.frame_id = 'arm_base_link'
+        t0.header.frame_id = 'base_link'
         t0.child_frame_id = 'imu{id}_aligned_link'.format(id=0)
 
         t0.transform.translation.x = 0.0
@@ -96,7 +95,7 @@ class ImuMutiBroadcastNode(Node):
         t2 = TransformStamped()
         t2.header.stamp = self.get_clock().now().to_msg()
         t2.header.frame_id = 'imu{id}_aligned_link'.format(id=1)
-        t2.child_frame_id = 'target_pose'
+        t2.child_frame_id = 'target_pose_matched'
 
         t2.transform.translation.x = 0.15
         t2.transform.translation.y = 0.0

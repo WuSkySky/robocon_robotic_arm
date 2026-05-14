@@ -82,17 +82,18 @@ class RcControlNode(Node):
             return
 
         # 从tf中获取目标位姿
+        self.get_logger().info(f"{tf_base_link_to_target_pose_matched.transform.translation}")
         target_matrix = self.transform_to_4x4(tf_base_link_to_target_pose_matched.transform)
         
         # 位置和姿态分别逆运动学解算
         joint_1_to_3_ctrl_angle, position_success_flag = self.arm_slover.ik_position(
             target_matrix,
-            q0=self.get_pose_msg.position[:4] if self.get_pose_msg is not None else np.zeros(4),
+            q0=self.get_pose_msg.position[:4] if len(self.get_pose_msg.position[:4]) != 0 else np.zeros(4),
         )
 
         joint_4_to_6_ctrl_angle, orientation_success_flag = self.arm_slover.ik_orientation(
             target_matrix,
-            q0=self.get_pose_msg.position[3:6] if self.get_pose_msg is not None else np.zeros(3),
+            q0=self.get_pose_msg.position[3:6] if len(self.get_pose_msg.position[3:6]) != 0 else np.zeros(3),
         )
 
         # 发布控制命令话题
