@@ -94,6 +94,15 @@ def generate_launch_description():
 
     ld.add_action(imu_launch)
 
+    # 启动IMU数据对齐节点，接受来自3个IMU的数据，对齐后发布新的IMU数据
+    ybimu_align_node = Node(
+        package='imu_ros2_device',
+        executable='ybimu_align',
+        name='ybimu_align_node',
+        output='screen'
+    )
+    ld.add_action(ybimu_align_node)
+
     # 串口驱动launch文件 接受来自下位机的串口数据，包含摇杆，拨轮和开关的数据
     serial_launch_file = os.path.join(
         get_package_share_directory('serial_driver'), 

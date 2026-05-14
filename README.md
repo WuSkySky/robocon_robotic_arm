@@ -59,6 +59,9 @@ source install/setup.bash
 配置串口权限
 ```bash
 sudo chmod 666 /dev/ttyACM0
+sudo chmod 666 /dev/ttyUSB0
+sudo chmod 666 /dev/ttyUSB1
+sudo chmod 666 /dev/ttyUSB2
 ```
 
 launch 启动
@@ -66,6 +69,15 @@ launch 启动
 ros2 launch bringup rc_control.launch.py 
 ros2 launch bringup arm_control.launch.py 
 ```
+service 服务的命令行
+```bash
+#这个是用来查询服务列表的，把"align_imu"服务滤过出来,看是否存在
+ros2 service list | grep align_imu 
+#这个两个是用来控制对齐服务的， 你确保你手臂水平,就命令行输入true,取消对齐就false
+ros2 service call /align_imu example_interfaces/srv/SetBool "{data: true}"
+ros2 service call /align_imu example_interfaces/srv/SetBool "{data: false}"
+```
+
 
 #### 分布启动
 配置串口权限
@@ -90,15 +102,12 @@ bash ./pkg/piper/can_activate.sh can0 1000000
 配置对应/dev/imu*
 ```bash
 #查询 KERNELS参数
-
 sudo udevadm info -a -n /dev/ttyUSB0 | grep KERNELS     
 #根据插入固定usb位置，编写/dev/imu*，创建物理接口位置与imu映射,可以避免插入顺序引发的/dev/ttyUSB*乱飘
-
 sudo nano /etc/udev/rules.d/99-imu.rules  
 ACTION=="add", SUBSYSTEM=="tty", KERNELS=="1-5.2:1.0", SYMLINK+="imu0"
 ACTION=="add", SUBSYSTEM=="tty", KERNELS=="1-5.3:1.0", SYMLINK+="imu1"
 ACTION=="add", SUBSYSTEM=="tty", KERNELS=="1-5.4:1.0", SYMLINK+="imu2"
-
 #提供一个方向，可以写入imu来给imu一个独特的id: 通过修改内部寄存器来设置一个可自定义的 ID
 ```
 

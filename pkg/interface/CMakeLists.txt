@@ -9,6 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -24,6 +25,9 @@ endif()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/UnloadedSerialData.msg"
+  "srv/AlignImu.srv"
+  
+  DEPENDENCIES geometry_msgs
   # 如果将来用到其他消息类型，也在这里追加
 )
 

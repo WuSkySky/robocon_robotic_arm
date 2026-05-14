@@ -1,0 +1,8 @@
+# 请求
+bool request_align          # true: 请求对齐； false: 取消/无操作
+geometry_msgs/Quaternion delta   # 附加旋转四元数（相对基础朝向的增量）
+
+---
+# 响应
+bool success                # 对齐是否成功
+string message              # 描述信息
