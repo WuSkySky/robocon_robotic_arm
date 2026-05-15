@@ -12,6 +12,9 @@ class ImuMutiBroadcastNode(Node):
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
+        self.tf_broadcaster_odom = tf2_ros.TransformBroadcaster(self)
+        self.timer = self.create_timer(0.1, self.publish_odom_to_base) 
+
         # 发布静态变换
         self.static_imu0_base_tf_broadcaster = StaticTransformBroadcaster(self)
 
@@ -39,6 +42,22 @@ class ImuMutiBroadcastNode(Node):
         self.tf_broadcaster_imu1 = tf2_ros.TransformBroadcaster(self)
         self.tf_broadcaster_imu2 = tf2_ros.TransformBroadcaster(self)
 
+    def publish_odom_to_base(self):
+        t = TransformStamped()
+        t.header.stamp = self.get_clock().now().to_msg()
+        t.header.frame_id = 'base_link'
+        t.child_frame_id = 'odom_link'
+
+        t.transform.translation.x = 0.0
+        t.transform.translation.y = 0.0
+        t.transform.translation.z = 0.0
+
+        t.transform.rotation.w = 0.7071068
+        t.transform.rotation.x = 0.0
+        t.transform.rotation.y = 0.7071068
+        t.transform.rotation.z = 0.0
+
+        self.tf_broadcaster_odom.sendTransform(t)
 
     def imu0_data_received_callback(self, msg: Imu):
         """
@@ -48,7 +67,7 @@ class ImuMutiBroadcastNode(Node):
         # print("test")
         t0 = TransformStamped()
         t0.header.stamp = self.get_clock().now().to_msg()
-        t0.header.frame_id = 'base_link'
+        t0.header.frame_id = 'odom_link'
         t0.child_frame_id = 'imu{id}_aligned_link'.format(id=0)
 
         t0.transform.translation.x = 0.0
@@ -56,8 +75,8 @@ class ImuMutiBroadcastNode(Node):
         t0.transform.translation.z = 0.0
 
         # 旋转部分：直接使用 orientation（四元数）
-        # t0.transform.rotation.w = 1.0
-        # t0.transform.rotation.x = 0.0
+        # t0.transform.rotation.w = 0.0
+        # t0.transform.rotation.x = -1.0
         # t0.transform.rotation.y = 0.0
         # t0.transform.rotation.z = 0.0
         t0.transform.rotation = msg.orientation
@@ -79,8 +98,8 @@ class ImuMutiBroadcastNode(Node):
         t1.transform.translation.z = 0.0
 
         # 旋转部分：直接使用 orientation（四元数）
-        # t1.transform.rotation.w = 1.0
-        # t1.transform.rotation.x = 0.0
+        # t1.transform.rotation.w = 0.0
+        # t1.transform.rotation.x = -1.0
         # t1.transform.rotation.y = 0.0
         # t1.transform.rotation.z = 0.0
         t1.transform.rotation = msg.orientation
@@ -102,8 +121,8 @@ class ImuMutiBroadcastNode(Node):
         t2.transform.translation.z = 0.0
 
         # 旋转部分：直接使用 orientation（四元数）
-        # t2.transform.rotation.w = 1.0
-        # t2.transform.rotation.x = 0.0
+        # t2.transform.rotation.w = 0.0
+        # t2.transform.rotation.x = -1.0
         # t2.transform.rotation.y = 0.0
         # t2.transform.rotation.z = 0.0
         t2.transform.rotation = msg.orientation
