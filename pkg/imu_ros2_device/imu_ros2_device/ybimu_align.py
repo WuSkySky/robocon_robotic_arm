@@ -17,9 +17,10 @@ class AlignService(Node):
         self.recoded_imu_frame = [None, None, None]  # 存储每个 IMU 的参考 frame
         self.imu_publishers_fix = [None, None, None]     # 存储每个 IMU 的orientation矩阵
 
-        # 创建服务：类型、服务名、回调
+        # 创建服务：类型、服务名、回调:第一个处理手臂朝下的情况，进行一次初始化
         self.srv = self.create_service(AlignImu, '/align_imu', self.align_callback)
         self.get_logger().info('对齐服务已启动，等待 ros2 service call ...')
+
 
         # 订阅 IMU 数据
         self.subscription0 = self.create_subscription(

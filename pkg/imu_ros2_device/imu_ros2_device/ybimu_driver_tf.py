@@ -2,11 +2,14 @@ import rclpy
 from rclpy.node import Node
 from tf2_ros import StaticTransformBroadcaster, TransformStamped
 from sensor_msgs.msg import Imu 
+from example_interfaces.srv import SetBool
 import tf2_ros
 
 class ImuMutiBroadcastNode(Node):
     def __init__(self):
         super().__init__('imu_tf_broadcast_node')
+        # 参数
+        self.tf_enabled = False
 
         # tf listener
         self.tf_buffer = tf2_ros.Buffer()
@@ -42,7 +45,25 @@ class ImuMutiBroadcastNode(Node):
         self.tf_broadcaster_imu1 = tf2_ros.TransformBroadcaster(self)
         self.tf_broadcaster_imu2 = tf2_ros.TransformBroadcaster(self)
 
+        # 服务名2：第二个用户处理近似纠正的情况，开启或关闭 TF 发布
+        self.srv = self.create_service(SetBool, '/align_user', self.callback)
+        self.get_logger().info('对齐服务已启动，等待 ros2 service call ...')
+
+    def callback(self, request, response):
+        self.tf_enabled = request.data
+        if self.tf_enabled:
+            response.success = True
+            response.message = "TF 发布已开启"
+            self.get_logger().info("TF 发布已开启")
+        else:
+            response.success = True
+            response.message = "TF 发布已关闭"
+            self.get_logger().info("TF 发布已关闭")
+        return response
+
     def publish_odom_to_base(self):
+        if not self.tf_enabled:
+            return  # 不发布 TF
         t = TransformStamped()
         t.header.stamp = self.get_clock().now().to_msg()
         t.header.frame_id = 'base_link'
@@ -65,6 +86,8 @@ class ImuMutiBroadcastNode(Node):
         """
         # 填充时间戳和坐标系 ID
         # print("test")
+        if not self.tf_enabled:
+            return  # 不发布
         t0 = TransformStamped()
         t0.header.stamp = self.get_clock().now().to_msg()
         t0.header.frame_id = 'odom_link'
@@ -88,6 +111,8 @@ class ImuMutiBroadcastNode(Node):
         """
         收到 /imu1/data_raw 消息发送tf的回调函数。
         """
+        if not self.tf_enabled:
+            return  # 不发布
         t1 = TransformStamped()
         t1.header.stamp = self.get_clock().now().to_msg()
         t1.header.frame_id = 'imu{id}_aligned_link'.format(id=0)
@@ -111,6 +136,8 @@ class ImuMutiBroadcastNode(Node):
         """
         收到 /imu2/data_raw 消息发送tf的回调函数。
         """
+        if not self.tf_enabled:
+            return  # 不发布 TF
         t2 = TransformStamped()
         t2.header.stamp = self.get_clock().now().to_msg()
         t2.header.frame_id = 'imu{id}_aligned_link'.format(id=1)
