@@ -77,7 +77,7 @@ ros2 service list | grep align_imu
 ros2 service call /align_imu interface/srv/AlignImu "{request_align: true}"
 ros2 service call /align_imu interface/srv/AlignImu "{request_align: false}"
 #这个第二个是用来控制tf发布服务的，发tf就命令行输入true,取消对齐就false
-ros2 service call /align_user example_interfaces.srv "{data: true}"
+ros2 service call /align_user example_interfaces/srv/SetBool "{data: true}"
 ros2 service call /align_user example_interfaces/srv/SetBool "{data: true}"
 ```
 

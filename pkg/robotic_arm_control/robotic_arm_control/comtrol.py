@@ -107,7 +107,7 @@ class RcControlNode(Node):
             control_msg.name = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6', 'joint7']
             control_msg.position =  self.solver_output_filter.filter_multiple(joint_ctrl_angle)
 
-            self.joint_angle_publisher.publish(control_msg)
+            # self.joint_angle_publisher.publish(control_msg)
         else:
             self.get_logger().warn(f"IK 解算失败")
 

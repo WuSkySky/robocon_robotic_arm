@@ -26,7 +26,7 @@ setup(
         'console_scripts': [
             'offset_tf_broadcast = robotic_arm_control.offset_tf_broadcast:main',
             'offset_tf_broadcast_arm_control = robotic_arm_control.offset_tf_broadcast_arm_control:main',
-            'rc_control = robotic_arm_control.rc_comtrol:main',
+            'control = robotic_arm_control.comtrol:main',
         ],
     },
 )

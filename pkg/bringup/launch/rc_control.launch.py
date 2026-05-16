@@ -166,12 +166,12 @@ def generate_launch_description():
     ld.add_action(broadcast_offset_tf_node)
 
     # 启动遥控器控制 使用目标位姿控制机械臂运动
-    rc_control_node = Node(
+    control_node = Node(
         package='robotic_arm_control',
-        executable='rc_control',
-        name='rc_control_node',     
+        executable='control',
+        name='control_node',     
         output='screen'
     )
-    ld.add_action(rc_control_node)
+    ld.add_action(control_node)
 
     return ld
